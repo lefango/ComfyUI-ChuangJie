@@ -1,86 +1,91 @@
-# 创界 · ComfyUI-ChuangJie
+# ���� �� ComfyUI-ChuangJie
 
-**中英双语 | 简单安装 | 可读源码**
+**��Ӣ˫�� | �򵥰�װ | �ɶ�Դ��**
 
-创界提供 LoRA 管理、提示词管理和可视化保存图像三个 ComfyUI 节点。当前版本 **0.3.2**，集成提示词管理器 **0.4.0**。
+�����ṩ LoRA ��������ʾ�ʹ����Ϳ��ӻ�����ͼ������ ComfyUI �ڵ㡣��ǰ�汾 **0.3.3**��������ʾ�ʹ����� **0.4.2**��
 
-## 0.3.2 更新 | Changes
+## 0.3.3 ���� | Changes
 
-- 新增独立正面文本、负面文本输出，可与自动切换的文本 / CONDITIONING 主输出同时使用，并连接到下游提示词节点。
-- 文本输出可按需启用，并选择用户输入、上游补充、预设和风格作为来源；未启用时不影响主输出。
-- 保留图片风格选择、收藏持久化、旧工作流兼容、中文端口标签和提示词快照。
-- 本地独立提示词模块 0.4.0 已完成其页面与执行验收；主插件 0.3.2 安装包由 modules.json 白名单重新装配并校验。
+- ��ʾ�ʷ����Ϊ����ʱ�������أ������Ը����������⣬�����״δ�ʱһ����Ⱦ������Ƭ��ɽ��濨�ٵķ��ա�
+- Prompt style cards now load in batches as the grid scrolls; search still covers the full library.
+
+## 0.3.2 ���� | Changes
+
+- �������������ı��������ı�����������Զ��л����ı� / CONDITIONING �����ͬʱʹ�ã������ӵ�������ʾ�ʽڵ㡣
+- �ı�����ɰ������ã���ѡ���û����롢���β��䡢Ԥ��ͷ����Ϊ��Դ��δ����ʱ��Ӱ���������
+- ����ͼƬ���ѡ���ղس־û����ɹ��������ݡ����Ķ˿ڱ�ǩ����ʾ�ʿ��ա�
+- ���ض�����ʾ��ģ�� 0.4.0 �������ҳ����ִ�����գ������ 0.3.2 ��װ���� modules.json ����������װ�䲢У�顣
 
 The prompt node adds separate positive and negative text outputs for downstream prompt nodes. These can run alongside the main outputs, which switch between text and CONDITIONING based on their connections. Choose which prompt sources feed the text outputs. Existing styles, favorites, Chinese labels and saved workflows remain supported. User libraries, favorites and imported covers stay out of the release ZIP.
 
-## 界面预览 | Interface preview
+## ����Ԥ�� | Interface preview
 
-以下为插件在 ComfyUI 中的实际运行截图；LoRA 卡片和提示词条目是用于展示的演示资料。
+����Ϊ����� ComfyUI �е�ʵ�����н�ͼ��LoRA ��Ƭ����ʾ����Ŀ������չʾ����ʾ���ϡ�
 
-**节点入口：在“创界节点”分类下选择管理工具。**
+**�ڵ���ڣ��ڡ�����ڵ㡱������ѡ��������ߡ�**
 
-<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/node-categories.jpg" width="850" alt="创界节点分类入口" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/node-categories.jpg" width="850" alt="����ڵ�������" /></p>
 
-**LoRA 管理：浏览卡片、分类和当前启用项。**
+**LoRA �����������Ƭ������͵�ǰ�����**
 
-<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/lora-manager.jpg" width="850" alt="LoRA 管理器界面" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/lora-manager.jpg" width="850" alt="LoRA ����������" /></p>
 
-**提示词管理：可视化编辑正面与负面提示词、管理预设。**
+**��ʾ�ʹ��������ӻ��༭�����븺����ʾ�ʡ�����Ԥ�衣**
 
-<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/prompt-manager.jpg" width="850" alt="提示词管理器界面" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/prompt-manager.jpg" width="850" alt="��ʾ�ʹ���������" /></p>
 
 These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt entries are demo data.
 
-## 新手先看：成品还是源码？
+## �����ȿ�����Ʒ����Դ�룿
 
-| 你想做什么 | 下载什么 | 说明 |
+| ������ʲô | ����ʲô | ˵�� |
 | --- | --- | --- |
-| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.3.2.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.2.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
-| **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
+| **ֻ�밲װʹ��** | [��Ʒ��ComfyUI-ChuangJie-0.3.3.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.3.zip) | ���� ZIP����ѹ����� `ComfyUI/custom_nodes/`������Ҫ�����롣 |
+| **�뿴������Լ��޸�** | [��ԴԴ�룺���ֿ��ļ�](https://github.com/lefango/ComfyUI-ChuangJie) | Python �� JavaScript Դ�붼������Ķ���Ҫ�Լ���鲢��װ�� |
 
-**成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
+**��Ʒ**�����Ѿ����������ͨ�û���װ�� ZIP��**Դ��**�ǳ���Ա�����Ķ����޸ĵ�ԭʼ�ļ������߹�����ͬ����Ʒֻ�Ǹ����㰲װ��`releases/` �ļ����ṩ��Ʒ ZIP���ֿ�� Code ҳ���ṩԴ�롣
 
-## 安装（适合新手）
+## ��װ���ʺ����֣�
 
-1. 下载上方的 `ComfyUI-ChuangJie-0.3.2.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
-2. 先关闭 ComfyUI，再把 ZIP 解压到 `ComfyUI/custom_nodes/`。
-3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
-4. 启动 ComfyUI，并刷新浏览器页面。
+1. �����Ϸ��� `ComfyUI-ChuangJie-0.3.3.zip` ��װ�������˶� `releases/SHA256SUMS.txt`��
+2. �ȹر� ComfyUI���ٰ� ZIP ��ѹ�� `ComfyUI/custom_nodes/`��
+3. ȷ������Ŀ¼�� `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`�������ܿ��� `__init__.py`��
+4. ���� ComfyUI����ˢ�������ҳ�档
 
-如果压缩包解压后多套了一层文件夹，请把内层 `ComfyUI-ChuangJie` 文件夹移到 `custom_nodes` 中。若你之前单独安装过本项目的 LoRA、提示词或可视化保存图像节点，请先停用旧的独立版本，再使用创界。
+���ѹ������ѹ�������һ���ļ��У�����ڲ� `ComfyUI-ChuangJie` �ļ����Ƶ� `custom_nodes` �С�����֮ǰ������װ������Ŀ�� LoRA����ʾ�ʻ���ӻ�����ͼ��ڵ㣬����ͣ�þɵĶ����汾����ʹ�ô��硣
 
-## 在 ComfyUI Manager 中安装或更新
+## �� ComfyUI Manager �а�װ�����
 
-在 Manager 搜索 `ComfyUI-ChuangJie`，点安装或更新。若暂时搜不到，可用上面的成品 ZIP 手动安装；也可以在 `ComfyUI/custom_nodes/` 中运行：
+�� Manager ���� `ComfyUI-ChuangJie`���㰲װ����¡�����ʱ�Ѳ�������������ĳ�Ʒ ZIP �ֶ���װ��Ҳ������ `ComfyUI/custom_nodes/` �����У�
 
 ```bash
 git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 ```
 
-通过 Git 安装后，在 Manager 点击更新；或在插件文件夹中执行 `git pull`。本插件已经发布到 Comfy Registry。目录同步可能需要一点时间；如果暂时搜不到，请稍后刷新 Manager，或先用上方成品 ZIP。
+ͨ�� Git ��װ���� Manager ������£����ڲ���ļ�����ִ�� `git pull`��������Ѿ������� Comfy Registry��Ŀ¼ͬ��������Ҫһ��ʱ�䣻�����ʱ�Ѳ��������Ժ�ˢ�� Manager���������Ϸ���Ʒ ZIP��
 
-## 插件做什么
+## �����ʲô
 
-- **可视化管理 LoRA**：在节点选择器的“创界节点 / 模型工具”中浏览和管理 LoRA；可把触发词传给提示词工具。
-- **可视化管理提示词**：在“创界节点 / 提示词工具”中编辑正面、负面提示词和预设，并连接到 CLIP 文本编码。
-- **可视化保存图像**：在“创界节点 / 图像工具”中选择或新建 ComfyUI `output` 下的文件夹，保存 PNG、浏览结果，并将图像继续传给后续节点。
+- **���ӻ����� LoRA**���ڽڵ�ѡ�����ġ�����ڵ� / ģ�͹��ߡ�������͹��� LoRA���ɰѴ����ʴ�����ʾ�ʹ��ߡ�
+- **���ӻ�������ʾ��**���ڡ�����ڵ� / ��ʾ�ʹ��ߡ��б༭���桢������ʾ�ʺ�Ԥ�裬�����ӵ� CLIP �ı����롣
+- **���ӻ�����ͼ��**���ڡ�����ڵ� / ͼ�񹤾ߡ���ѡ����½� ComfyUI `output` �µ��ļ��У����� PNG��������������ͼ��������������ڵ㡣
 
-旧工作流继续使用 `LoRAManager`、`PromptManager` 和 `VisualSaveImage` 节点标识。插件公共资料保存在 ComfyUI 用户目录的 `lora-manager` 与 `prompt-manager` 文件夹中；升级不会删除这些资料。请勿手动删除它们。
+�ɹ���������ʹ�� `LoRAManager`��`PromptManager` �� `VisualSaveImage` �ڵ��ʶ������������ϱ����� ComfyUI �û�Ŀ¼�� `lora-manager` �� `prompt-manager` �ļ����У���������ɾ����Щ���ϡ������ֶ�ɾ�����ǡ�
 
-## 卸载或回退
+## ж�ػ����
 
-关闭 ComfyUI，把 `ComfyUI/custom_nodes/ComfyUI-ChuangJie` 文件夹移出 `custom_nodes`，再恢复之前备份的插件文件夹并重启。不要删除 ComfyUI 用户目录中的 `lora-manager` 和 `prompt-manager`。
+�ر� ComfyUI���� `ComfyUI/custom_nodes/ComfyUI-ChuangJie` �ļ����Ƴ� `custom_nodes`���ٻָ�֮ǰ���ݵĲ���ļ��в���������Ҫɾ�� ComfyUI �û�Ŀ¼�е� `lora-manager` �� `prompt-manager`��
 
 ## English: Quick guide
 
 ### Product or source code?
 
-- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.3.2.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.2.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
+- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.3.3.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.3.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
 
-1. Download `releases/ComfyUI-ChuangJie-0.3.2.zip` and verify `releases/SHA256SUMS.txt`.
+1. Download `releases/ComfyUI-ChuangJie-0.3.3.zip` and verify `releases/SHA256SUMS.txt`.
 2. Stop ComfyUI and extract the ZIP into `ComfyUI/custom_nodes/`.
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.
@@ -93,13 +98,13 @@ Search for `ComfyUI-ChuangJie` in Manager and choose Install or Update. If it is
 
 ### What it does
 
-- **Visual LoRA management:** Browse and manage LoRAs under “ChuangJie Nodes / Model Tools”; trigger words can be passed to the prompt tool.
-- **Visual prompt management:** Edit positive and negative prompts and presets under “ChuangJie Nodes / Prompt Tools,” then connect them to CLIP text encoders.
+- **Visual LoRA management:** Browse and manage LoRAs under ��ChuangJie Nodes / Model Tools��; trigger words can be passed to the prompt tool.
+- **Visual prompt management:** Edit positive and negative prompts and presets under ��ChuangJie Nodes / Prompt Tools,�� then connect them to CLIP text encoders.
 - **Visual image saving:** Choose or create folders under ComfyUI's `output`, save PNG files, preview results, and pass images through to later nodes.
 
 Existing workflows retain the `LoRAManager`, `PromptManager`, and `VisualSaveImage` node identifiers. User data stays in the ComfyUI user folders `lora-manager` and `prompt-manager` when the plugin is updated or removed.
 
-## License / 许可
+## License / ����
 
 Licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**. You may use, modify, and redistribute this project for non-commercial purposes with attribution; shared adaptations must use the same or a compatible license. Commercial use requires separate permission. See [LICENSE](LICENSE) and the [full license terms](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 

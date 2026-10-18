@@ -19,6 +19,7 @@
 .pm-style-manager>.pm-body>*{flex-shrink:0}
 .pm-dialog.pm-style-manager{width:min(1150px,96vw)}
 .pm-style-grid{max-height:50vh;overflow:auto;align-content:start;grid-auto-rows:max-content;padding:2px}.pm-style-card{align-self:start}
+.pm-style-grid>.pm-style-more{grid-column:1/-1;justify-self:center;width:100%;padding:10px;text-align:center;color:#afbdcc;font-size:12px}
 @media(max-width:480px){.pm-style-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-style-manager .pm-toolbar{align-items:stretch}.pm-style-manager .pm-toolbar>input{min-width:100%!important}}
 .pm-dialog{width:min(700px,96vw);max-height:92vh;background:#192432;border:1px solid #5b7189;border-radius:12px;box-shadow:0 16px 80px #0009;display:flex;flex-direction:column;overflow:hidden}
 .pm-heading{padding:16px 20px;border-bottom:1px solid #3b4e64;display:flex;align-items:center;justify-content:space-between;font-size:19px;font-weight:600;gap:20px}.pm-body{padding:18px;overflow:auto;min-height:0}.pm-field{display:block;margin-bottom:12px}.pm-field>input,.pm-field>textarea,.pm-field>select{display:block;margin-top:4px}.pm-category-check{display:inline-flex;gap:5px;margin:5px 10px 5px 0}.pm-dialog fieldset{border:1px solid #4b5d73;margin-bottom:12px}
