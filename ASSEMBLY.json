@@ -5,7 +5,7 @@
     {
       "id": "lora",
       "version": "0.2.1",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager",
       "python": [
         "api.py",
         "catalog.py",
@@ -28,7 +28,7 @@
     {
       "id": "prompt",
       "version": "0.4.2",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager",
       "python": [
         "api.py",
         "core.py",
@@ -48,7 +48,7 @@
     {
       "id": "visual_save",
       "version": "0.1.0",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image",
       "python": [
         "api.py",
         "nodes.py",
@@ -65,28 +65,28 @@
     {
       "path": "__init__.py",
       "sha256": "a4d5f0a2400b5c772df7d8fec0ff59f4ac99bf1a78f2d00a2ff9fbeeae5207d0",
-      "source": "�����/Դ��/runtime/__init__.py",
+      "source": "主插件/源码/runtime/__init__.py",
       "source_sha256": "a4d5f0a2400b5c772df7d8fec0ff59f4ac99bf1a78f2d00a2ff9fbeeae5207d0",
       "transform": "copy"
     },
     {
       "path": "README.md",
       "sha256": "815c1d329af473c8824998520543629d6e973b6aca55a13cf821654b7d693da4",
-      "source": "�����/Դ��/runtime/README.md",
+      "source": "主插件/源码/runtime/README.md",
       "source_sha256": "815c1d329af473c8824998520543629d6e973b6aca55a13cf821654b7d693da4",
       "transform": "copy"
     },
     {
       "path": "LICENSE",
       "sha256": "c0c17d3c723932e82ee30a8c6d96ed47809eb3ac9026f4571c2c210b35ee8790",
-      "source": "�����/Դ��/runtime/LICENSE",
+      "source": "主插件/源码/runtime/LICENSE",
       "source_sha256": "c0c17d3c723932e82ee30a8c6d96ed47809eb3ac9026f4571c2c210b35ee8790",
       "transform": "copy"
     },
     {
       "path": ".gitignore",
       "sha256": "8e3904068778457c70f31f86eecddfeff75d8cf893dbaa7d7e505dd97365dfbb",
-      "source": "�����/Դ��/runtime/.gitignore",
+      "source": "主插件/源码/runtime/.gitignore",
       "source_sha256": "8e3904068778457c70f31f86eecddfeff75d8cf893dbaa7d7e505dd97365dfbb",
       "transform": "copy"
     },
@@ -107,98 +107,98 @@
     {
       "path": "modules/lora/api.py",
       "sha256": "ee827478ecbea4c2cf9ca659b54a427891b9cd9ff18b318808a8fccd2ab6346a",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/api.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/api.py",
       "source_sha256": "ee827478ecbea4c2cf9ca659b54a427891b9cd9ff18b318808a8fccd2ab6346a",
       "transform": "copy"
     },
     {
       "path": "modules/lora/catalog.py",
       "sha256": "e19a42bbef1898c75b3014d0e44749d80544ea62f06a9f1e57a1e298997cab7f",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/catalog.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/catalog.py",
       "source_sha256": "e19a42bbef1898c75b3014d0e44749d80544ea62f06a9f1e57a1e298997cab7f",
       "transform": "copy"
     },
     {
       "path": "modules/lora/core.py",
       "sha256": "c0eb199e5a27b3792c7f323cc2404989e4cbadc5d0731ef947595a1b4948a49f",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/core.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/core.py",
       "source_sha256": "c0eb199e5a27b3792c7f323cc2404989e4cbadc5d0731ef947595a1b4948a49f",
       "transform": "copy"
     },
     {
       "path": "modules/lora/covers.py",
       "sha256": "7f5f4f9f6ad727acb81ceee651ade031f66bc21bdfab14bff400ac8e51bbbe4f",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/covers.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/covers.py",
       "source_sha256": "7f5f4f9f6ad727acb81ceee651ade031f66bc21bdfab14bff400ac8e51bbbe4f",
       "transform": "copy"
     },
     {
       "path": "modules/lora/nodes.py",
       "sha256": "20b295921f79889d0b5f3d7a3d66b1896613bbad55133e6335ceb88115baece2",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/nodes.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/nodes.py",
       "source_sha256": "20b295921f79889d0b5f3d7a3d66b1896613bbad55133e6335ceb88115baece2",
       "transform": "copy"
     },
     {
       "path": "modules/lora/service.py",
       "sha256": "369ac25dd31727f7025276c85c19913f5552dd7de57ceef775201f0255734428",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/service.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/service.py",
       "source_sha256": "369ac25dd31727f7025276c85c19913f5552dd7de57ceef775201f0255734428",
       "transform": "copy"
     },
     {
       "path": "modules/lora/storage.py",
       "sha256": "e45b6118e47078d1536ea47861a314e25bc6a1e9de3d012a5c282fe6268508ea",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/storage.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/storage.py",
       "source_sha256": "e45b6118e47078d1536ea47861a314e25bc6a1e9de3d012a5c282fe6268508ea",
       "transform": "copy"
     },
     {
       "path": "modules/lora/version.py",
       "sha256": "55d8ba39f7c3468acf41e5a3bd7a3630f6e2765ec2370a2bc6fce24fbf1b8e5d",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/version.py",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/version.py",
       "source_sha256": "55d8ba39f7c3468acf41e5a3bd7a3630f6e2765ec2370a2bc6fce24fbf1b8e5d",
       "transform": "copy"
     },
     {
       "path": "web/lora.js",
       "sha256": "ee6285e4024029c8d087f47fb8bea14febba687792bf6fdd715e9ecebfacb49b",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/main.js",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/main.js",
       "source_sha256": "7ec4396c007922e2ca3e90dc27d6a91dc4cb2903413e6617caedb48728abce23",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/lora/manager.mjs",
       "sha256": "6b9d0e043df37a06dee2bb3ef1e65c746291425222d815bbce002bb03d657c22",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/manager.js",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/manager.js",
       "source_sha256": "41aa267978b48ea9609308ecee270c41d282ced0e148c5355f63550fcc3572e1",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/lora/node_preview.mjs",
       "sha256": "713ea798ff8f83e6901c498e1207209b172ccd8bbd001d0f71ffac441e75ce18",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/node_preview.js",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/node_preview.js",
       "source_sha256": "8a42d24f5a1bd3cb4fd0d2299f1b5e538fc04f44090fb88b34de0b6a3af49645",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/lora/state.mjs",
       "sha256": "691ed678476895eb335a27133b057596bc13ebd1d4bdee935d81b0d434a0cb83",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/state.js",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/state.js",
       "source_sha256": "691ed678476895eb335a27133b057596bc13ebd1d4bdee935d81b0d434a0cb83",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/lora/tree.mjs",
       "sha256": "36cabdca7806c3fc51d42a7853ccd1a9047609eef646dfe8aa2edf9cd4d079b4",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/tree.js",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/tree.js",
       "source_sha256": "36cabdca7806c3fc51d42a7853ccd1a9047609eef646dfe8aa2edf9cd4d079b4",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/lora/manager.css",
       "sha256": "f0be273da24185028f2051e288c495e5ef18ff7f4bc0884e73915474ecd4068e",
-      "source": "ģ��ڵ�/lora�ڵ㿪��/Դ��/ComfyUI-LoRA-Manager/web/manager.css",
+      "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/manager.css",
       "source_sha256": "f0be273da24185028f2051e288c495e5ef18ff7f4bc0884e73915474ecd4068e",
       "transform": "copy"
     },
@@ -212,77 +212,77 @@
     {
       "path": "modules/prompt/api.py",
       "sha256": "80ec26981a1b79304d88daaba4c73501e21f41cb48f120e2e163ecab7d9bdf38",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/api.py",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/api.py",
       "source_sha256": "80ec26981a1b79304d88daaba4c73501e21f41cb48f120e2e163ecab7d9bdf38",
       "transform": "copy"
     },
     {
       "path": "modules/prompt/core.py",
       "sha256": "5407c223e2b5cee8aabb16e3da84d3d66b6ce2902c9d3edcec782cbb082be436",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/core.py",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/core.py",
       "source_sha256": "5407c223e2b5cee8aabb16e3da84d3d66b6ce2902c9d3edcec782cbb082be436",
       "transform": "copy"
     },
     {
       "path": "modules/prompt/nodes.py",
       "sha256": "ba77b75d64acba9a7594f5c4860f0f58152a45db9332750b6dc3e41ee6058eb7",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/nodes.py",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/nodes.py",
       "source_sha256": "ba77b75d64acba9a7594f5c4860f0f58152a45db9332750b6dc3e41ee6058eb7",
       "transform": "copy"
     },
     {
       "path": "modules/prompt/storage.py",
       "sha256": "d196c9b4e739c1e01112f2bb6b20aaa9e5edb5eaa77bb6004ce13eacbf23fbaf",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/storage.py",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/storage.py",
       "source_sha256": "d196c9b4e739c1e01112f2bb6b20aaa9e5edb5eaa77bb6004ce13eacbf23fbaf",
       "transform": "copy"
     },
     {
       "path": "modules/prompt/styles.py",
       "sha256": "4e183b94ff22e0b9dce66cf32fd803f51c2d2f5cb8096b12c268a22a42cb5b12",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/styles.py",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/styles.py",
       "source_sha256": "4e183b94ff22e0b9dce66cf32fd803f51c2d2f5cb8096b12c268a22a42cb5b12",
       "transform": "copy"
     },
     {
       "path": "web/prompt.js",
       "sha256": "78787fc8da7584033de0ae8422bdc820e1a498e572baa1fa7a6efd3a1b34242c",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/main.js",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/main.js",
       "source_sha256": "e4aa584c145deffa71bc88b95a63fed9b445af556b8e836e5ae8a5882a03feb7",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/node.mjs",
       "sha256": "67f8cee8a826bdbd79f41ec9e88d36ed6f3a42e7b694efb4b6d9732b1f740462",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/node.js",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/node.js",
       "source_sha256": "feb50040f33c09f1ec87b917aa1c1dd4cdd78acc5fa37593168380f4b472c179",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/state.mjs",
       "sha256": "9168aae816f7c69590bc0f88d4760d4d877634558b65b59ac2bcdda6ece8a2d7",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/state.js",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/state.js",
       "source_sha256": "9168aae816f7c69590bc0f88d4760d4d877634558b65b59ac2bcdda6ece8a2d7",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/ui.mjs",
       "sha256": "b89cb50cd10c699b77738b36f5f830fc24b239b571c1d8a3ab4e760eb814df9d",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/ui.js",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/ui.js",
       "source_sha256": "485299df637ab910db913d2a22e7f92b47ea3457e8e62ec82e843b8761dffdc1",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/styles.mjs",
       "sha256": "6f2edd5367d04629799f3923a0c057fa9e661361c8805c9ff83e0d5931a97c67",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/styles.js",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/styles.js",
       "source_sha256": "48d7d44051bb7e168ad04421d8199143d921aaa9f84d16bfa3832684039d38b5",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/style.css",
       "sha256": "50f161aae8733cd29ae92dac53c616191cbcf965ce74d6b36bebb6fc62f24be9",
-      "source": "ģ��ڵ�/��ʾ�ʽڵ㿪��/Դ��/ComfyUI-Prompt-Manager/web/style.css",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/style.css",
       "source_sha256": "50f161aae8733cd29ae92dac53c616191cbcf965ce74d6b36bebb6fc62f24be9",
       "transform": "copy"
     },
@@ -296,35 +296,35 @@
     {
       "path": "modules/visual_save/api.py",
       "sha256": "22ad3368719553a1de3b801f42974fd4238d13c9245833ac6a543ad0ed7391e2",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image/api.py",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/api.py",
       "source_sha256": "22ad3368719553a1de3b801f42974fd4238d13c9245833ac6a543ad0ed7391e2",
       "transform": "copy"
     },
     {
       "path": "modules/visual_save/nodes.py",
       "sha256": "4fee14a6c9a7c5687c61c2e60952c3ba6b9acb8781653541ebf77d3411424cd9",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image/nodes.py",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/nodes.py",
       "source_sha256": "4fee14a6c9a7c5687c61c2e60952c3ba6b9acb8781653541ebf77d3411424cd9",
       "transform": "copy"
     },
     {
       "path": "modules/visual_save/paths.py",
       "sha256": "2477be6867abb24d3e9f418cb5a288434e20d4afe7a0501c2270c93d86acb1a8",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image/paths.py",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/paths.py",
       "source_sha256": "2477be6867abb24d3e9f418cb5a288434e20d4afe7a0501c2270c93d86acb1a8",
       "transform": "copy"
     },
     {
       "path": "web/visual_save.js",
       "sha256": "f8570b225bc1030395cac2d0ad5bd9d76ed02ebcefd1fdf97ca8f3cbd914309c",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image/web/main.js",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/web/main.js",
       "source_sha256": "b7eaea4b87d1cb747f6cfcc2891c1aef3082e2fd62c96a241d557f13b115b916",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/visual_save/style.css",
       "sha256": "205c3ecbc06e9a11e462a8db2bf9f1bc05c491150ec6c627cc349769bdca8d33",
-      "source": "ģ��ڵ�/����ͼƬ�ڵ㿪��/Դ��/ComfyUI-Visual-Save-Image/web/style.css",
+      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/web/style.css",
       "source_sha256": "205c3ecbc06e9a11e462a8db2bf9f1bc05c491150ec6c627cc349769bdca8d33",
       "transform": "copy"
     }

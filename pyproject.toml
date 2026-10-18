@@ -10,4 +10,4 @@ Repository = "https://github.com/lefango/ComfyUI-ChuangJie"
 
 [tool.comfy]
 PublisherId = "lefango"
-DisplayName = "���� �� ChuangJie"
+DisplayName = "创界 · ChuangJie"

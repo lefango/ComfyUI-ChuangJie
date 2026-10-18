@@ -19,7 +19,7 @@ def register():
     def get_store(request):
         user = server.user_manager.get_request_user_id(request)
         if not isinstance(user, str) or not user or user.startswith("__") or any(x in user for x in ("/", "\\", ":", "..")):
-            raise Invalid("��Ч�û�")
+            raise Invalid("无效用户")
         root = Path(folder_paths.get_user_directory()) / user / "prompt-manager"
         if user not in _stores:
             _stores[user] = Store(root)
@@ -38,7 +38,7 @@ def register_routes(routes, get_store):
                 if request.method != "GET" and origin:
                     parsed = urlsplit(origin)
                     if parsed.scheme != request.scheme or parsed.netloc != request.host:
-                        raise web.HTTPForbidden(text="������ͬԴ����")
+                        raise web.HTTPForbidden(text="仅允许同源请求")
                 return await handler(request)
             except Conflict as exc:
                 return web.json_response({"error": str(exc)}, status=409)
@@ -47,12 +47,12 @@ def register_routes(routes, get_store):
             except (ValueError, TypeError, RecursionError) as exc:
                 return web.json_response({"error": str(exc)}, status=400)
             except KeyError:
-                return web.json_response({"error": "�����ֶ�ȱʧ���û���Ч"}, status=403)
+                return web.json_response({"error": "请求字段缺失或用户无效"}, status=403)
             except web.HTTPException:
                 raise
             except Exception:
                 logging.exception("[Prompt Manager] API operation failed")
-                return web.json_response({"error": "����ʧ�ܣ���ǰ�����ѱ�������鿴�����־"}, status=500)
+                return web.json_response({"error": "操作失败，当前输入已保留，请查看后端日志"}, status=500)
         return wrapped
 
     @routes.get(PREFIX + "/status")
@@ -81,7 +81,7 @@ def register_routes(routes, get_store):
     @guarded
     async def operation(request):
         if request.content_type != "application/json":
-            raise Invalid("��Ҫ application/json")
+            raise Invalid("需要 application/json")
         chunks, size = [], 0
         async for chunk in request.content.iter_chunked(65536):
             size += len(chunk)
@@ -90,7 +90,7 @@ def register_routes(routes, get_store):
             chunks.append(chunk)
         body = json.loads(b"".join(chunks))
         if not isinstance(body, dict):
-            raise Invalid("����������� JSON ����")
+            raise Invalid("请求体必须是 JSON 对象")
         store = get_store(request)
         op = request.match_info["operation"]
         if op == "style-save":
