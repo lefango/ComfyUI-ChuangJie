@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from .core import Conflict, Invalid, Missing, MAX_JSON, EMPTY_CONFIG, merge
 from .storage import Store
+from .styles import Styles
 
 PREFIX = "/prompt-manager/v1"
 _stores = {}
@@ -58,14 +59,25 @@ def register_routes(routes, get_store):
     @guarded
     async def status(request):
         get_store(request)
-        return web.json_response({"ok": True, "version": "0.1.1", "schema": 1})
+        return web.json_response({"ok": True, "version": "0.2.1", "schema": 2})
+
+    @routes.get(PREFIX + "/styles")
+    @guarded
+    async def styles(request):
+        return web.json_response(await asyncio.to_thread(Styles(get_store(request)).library))
+
+    @routes.get(PREFIX + "/style-image/{id}")
+    @guarded
+    async def style_image(request):
+        path = await asyncio.to_thread(Styles(get_store(request)).image, request.match_info["id"])
+        return web.FileResponse(path, headers={"Cache-Control": "private, no-cache", "X-Content-Type-Options": "nosniff"})
 
     @routes.get(PREFIX + "/library")
     @guarded
     async def library(request):
         return web.json_response(await asyncio.to_thread(get_store(request).library))
 
-    @routes.post(PREFIX + "/{operation:category|preset|preset-read|delete|merge}")
+    @routes.post(PREFIX + "/{operation:category|preset|preset-read|delete|merge|style-save|style-delete|style-favorite|style-import}")
     @guarded
     async def operation(request):
         if request.content_type != "application/json":
@@ -81,7 +93,15 @@ def register_routes(routes, get_store):
             raise Invalid("请求体必须是 JSON 对象")
         store = get_store(request)
         op = request.match_info["operation"]
-        if op == "merge":
+        if op == "style-save":
+            result = await asyncio.to_thread(Styles(store).save, body)
+        elif op == "style-delete":
+            result = await asyncio.to_thread(Styles(store).delete, body.get("id"), body.get("revision"))
+        elif op == "style-favorite":
+            result = await asyncio.to_thread(Styles(store).favorite, body.get("id"), body.get("favorite"))
+        elif op == "style-import":
+            result = await asyncio.to_thread(Styles(store).import_local, body.get("path"))
+        elif op == "merge":
             result = await asyncio.to_thread(merge, body.get("positive", ""), body.get("negative", ""),
                                             body.get("config", EMPTY_CONFIG), body.get("positive_extra", ""), body.get("negative_extra", ""))
         elif op == "preset-read":

@@ -1,7 +1,7 @@
-export const emptyConfig = () => ({ schema: 1, presets: [] });
+export const emptyConfig = () => ({ schema: 2, presets: [], styles: [], style_enabled: false, style_order: "user", multi_select: false });
 export function parseConfig(raw) {
     const value = JSON.parse(raw);
-    if (!value || value.schema !== 1 || !Array.isArray(value.presets) || value.presets.length > 256) throw Error("无效配置，原文已保留");
+    if (!value || ![1, 2].includes(value.schema) || !Array.isArray(value.presets) || value.presets.length > 256) throw Error("无效配置，原文已保留");
     const ids = new Set();
     for (const p of value.presets) {
         if (!p || typeof p.id !== "string" || !p.id || ids.has(p.id) || !Number.isInteger(p.revision) || p.revision < 1 ||
@@ -9,7 +9,31 @@ export function parseConfig(raw) {
             typeof p.positive !== "string" || typeof p.negative !== "string") throw Error("无效预设快照，原配置已保留");
         ids.add(p.id);
     }
-    return structuredClone(value);
+    if (value.schema === 1) return { ...emptyConfig(), presets: structuredClone(value.presets) };
+    if (!Array.isArray(value.styles) || value.styles.length > 3 || typeof value.style_enabled !== "boolean" ||
+        typeof value.multi_select !== "boolean" || !["user", "style", "krea"].includes(value.style_order) || (!value.multi_select && value.styles.length > 1)) throw Error("无效风格配置，原文已保留");
+    const styleIds = new Set();
+    for (const s of value.styles) {
+        if (!s || typeof s.id !== "string" || !s.id || styleIds.has(s.id) || !Number.isInteger(s.revision) || s.revision < 1 ||
+            typeof s.name !== "string" || !s.name.trim() || typeof s.positive !== "string" || typeof s.negative !== "string" ||
+            !["tags", "paragraph"].includes(s.text_type)) throw Error("无效风格快照，原文已保留");
+        styleIds.add(s.id);
+    }
+    const result = structuredClone(value);
+    if (result.style_order === "krea") result.style_order = "style";
+    return result;
+}
+export function applyStyle(config, style, sync = false) {
+    const c = parseConfig(JSON.stringify(config));
+    const index = c.styles.findIndex(s => s.id === style.id);
+    if (index >= 0 && !sync) { c.styles.splice(index, 1); return c; }
+    const snapshot = Object.fromEntries(["id", "revision", "name", "positive", "negative", "text_type"].map(k => [k, style[k]]));
+    if (index >= 0) c.styles[index] = snapshot;
+    else if (!c.multi_select) c.styles = [snapshot];
+    else if (c.styles.length >= 3) throw Error("已达 3 项上限，请先移除一个风格");
+    else c.styles.push(snapshot);
+    c.style_enabled = true;
+    return c;
 }
 export function applyPreset(config, preset, sync = false) {
     const result = structuredClone(config);

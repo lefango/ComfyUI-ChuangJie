@@ -1,5 +1,6 @@
 import { parseConfig } from "./state.mjs";
 import { el, button, isolate, copyText, pasteText, renderCombination, openManager } from "./ui.mjs";
+import { openStyles, renderStyleSummary } from "./styles.mjs";
 
 export class PromptView {
     constructor(node, client) {
@@ -7,7 +8,11 @@ export class PromptView {
         this.element = el("div", "pm-node"); isolate(this.element);
         this.status = el("div", "pm-muted"); this.status.role = "status";
         this.combo = el("div", "pm-node-combo");
-        this.element.append(button("管理预设", () => openManager(client, () => this.config(), c => this.setConfig(c))), this.status, this.combo);
+        const toolbar = el("div", "pm-toolbar");
+        toolbar.append(button("管理预设", () => openManager(client, () => this.config(), c => this.setConfig(c))),
+            button("选择风格", () => openStyles(client, () => this.config(), c => this.setConfig(c))));
+        this.styleSummary = el("div", "pm-node-styles");
+        this.element.append(toolbar, this.styleSummary, this.status, this.combo);
         for (const side of ["positive", "negative"]) this.createSide(side);
         const widget = node.addDOMWidget("prompt_manager_ui", "prompt-manager", this.element, {
             serialize: false, hideOnZoom: false, getMinHeight: () => 760, getHeight: () => 760,
@@ -40,12 +45,17 @@ export class PromptView {
         const section = el("section", `pm-side pm-${side}`); section.append(el("h3", "", `${label}提示词 · 用户输入`));
         const area = el("textarea", "pm-user"); area.ariaLabel = `${label}用户输入`; area.spellcheck = false;
         const actions = el("div", "pm-toolbar"), supplement = el("div", "pm-supplement");
-        const details = el("details"), summary = el("summary", "", "编辑预览结果");
+        const supplementDetails = el("details", "pm-supplement-details");
+        const supplementSummary = el("summary", "", "预设与风格补充");
+        const copySupplement = button("复制补充结果", () => copyText(this.sides[side].supplementText)); copySupplement.disabled = true;
+        copySupplement.ariaLabel = `${label}复制补充结果`;
+        supplementDetails.append(supplementSummary, el("p", "pm-muted", "只读；复制不含来源标签与重复说明"), supplement, copySupplement);
+        const details = el("details", "pm-preview-details"), summary = el("summary", "", "编辑预览结果");
         const result = el("textarea", "pm-result"); result.readOnly = true; result.ariaLabel = `${label}编辑预览结果`;
         const execution = el("textarea", "pm-result"); execution.readOnly = true; execution.ariaLabel = `${label}最近执行结果`; execution.hidden = true;
         const runStatus = el("p", "pm-muted"), copyRun = button("复制上次结果", () => copyText(this.lastExecution?.[side] ?? "")); copyRun.hidden = true;
         const history = [], redo = [];
-        const state = this.sides[side] = { area, supplement, result, summary, execution, runStatus, copyRun, history, redo, selection: [0, 0], last: "" };
+        const state = this.sides[side] = { area, supplement, supplementSummary, copySupplement, supplementText: "", result, summary, execution, runStatus, copyRun, history, redo, selection: [0, 0], last: "" };
         const remember = () => { state.selection = [area.selectionStart, area.selectionEnd]; };
         for (const name of ["select", "keyup", "click", "blur"]) area.addEventListener(name, remember);
         const commit = value => {
@@ -72,7 +82,7 @@ export class PromptView {
             area.focus(); area.setSelectionRange(start + value.length, start + value.length); remember();
         })), button("清空", () => { commit(""); state.selection = [0, 0]; }), button("撤销", () => undo(false)));
         details.append(summary, result, button("复制结果", () => copyText(result.value)), runStatus, execution, copyRun);
-        section.append(area, actions, el("h4", "", "预设补充（只读，来源不参与输出）"), supplement, details); this.element.append(section);
+        section.append(area, actions, supplementDetails, details); this.element.append(section);
     }
     update() {
         const inputs = this.inputs(), signature = JSON.stringify(inputs), graph = this.graphKey();
@@ -91,24 +101,30 @@ export class PromptView {
             const wired = this.node.inputs?.some(i => i.name === side && i.link != null);
             state.area.disabled = wired;
             state.summary.textContent = this.connected() ? "编辑预览 · 未包含上游执行文本" : "编辑预览结果";
+            state.supplementSummary.textContent = this.connected() ? "预设与风格补充 · 未包含上游执行文本" : "预设与风格补充";
         }
         if (changed) {
-            try { renderCombination(this.combo, () => this.config(), c => this.setConfig(c)); }
+            try {
+                renderCombination(this.combo, () => this.config(), c => this.setConfig(c));
+                renderStyleSummary(this.styleSummary, () => this.config(), c => this.setConfig(c));
+            }
             catch (e) {
                 ++this.version; clearTimeout(this.debounce); this.status.textContent = e.message;
-                for (const state of Object.values(this.sides)) { state.result.value = ""; state.supplement.textContent = "配置无效，原文已保留"; }
+                for (const state of Object.values(this.sides)) { state.result.value = ""; state.supplementText = ""; state.copySupplement.disabled = true; state.supplement.textContent = "配置无效，原文已保留"; }
                 return;
             }
         }
         this.status.textContent = this.connected() ? "编辑预览未包含上游执行文本；完整输出请执行节点。" : "用户输入优先于上游追加和预设；关闭预设可保留快照。";
         const id = ++this.version; clearTimeout(this.debounce);
-        for (const state of Object.values(this.sides)) { state.result.value = ""; state.supplement.textContent = "正在计算…"; }
+        for (const state of Object.values(this.sides)) { state.result.value = ""; state.supplementText = ""; state.copySupplement.disabled = true; state.supplement.textContent = "正在计算…"; }
         this.debounce = setTimeout(async () => {
             try {
                 const result = await this.client("merge", inputs);
                 if (id !== this.version) return;
                 for (const [side, state] of Object.entries(this.sides)) {
                     const data = result[side]; state.result.value = data.text; state.supplement.replaceChildren();
+                    state.supplementText = data.accepted.map(row => row.text).join(", ");
+                    state.copySupplement.disabled = !state.supplementText;
                     for (const row of data.accepted) state.supplement.append(el("div", "pm-term", `${row.text}　【${row.source}】`));
                     if (!data.accepted.length) state.supplement.append(el("span", "pm-muted", "无补充词条"));
                     const details = el("details"); details.append(el("summary", "", `重复说明与预设原文 · 跳过 ${data.skipped.length} 项`));

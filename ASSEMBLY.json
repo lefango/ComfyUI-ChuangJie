@@ -1,6 +1,6 @@
 {
   "name": "ComfyUI-ChuangJie",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "modules": [
     {
       "id": "lora",
@@ -27,19 +27,21 @@
     },
     {
       "id": "prompt",
-      "version": "0.1.1",
+      "version": "0.2.1",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager",
       "python": [
         "api.py",
         "core.py",
         "nodes.py",
-        "storage.py"
+        "storage.py",
+        "styles.py"
       ],
       "web": [
         "main.js",
         "node.js",
         "state.js",
         "ui.js",
+        "styles.js",
         "style.css"
       ]
     },
@@ -62,16 +64,16 @@
   "files": [
     {
       "path": "__init__.py",
-      "sha256": "0999e2ff95f686752d64393f04180a6b8fc44918887c5c38c04ab5cd4d6ab437",
+      "sha256": "9ad599d573e679cb72d46a588c20ccb3e87886987b40dd07573025d7ff47ca86",
       "source": "主插件/源码/runtime/__init__.py",
-      "source_sha256": "0999e2ff95f686752d64393f04180a6b8fc44918887c5c38c04ab5cd4d6ab437",
+      "source_sha256": "9ad599d573e679cb72d46a588c20ccb3e87886987b40dd07573025d7ff47ca86",
       "transform": "copy"
     },
     {
       "path": "README.md",
-      "sha256": "a911160a0ab87c6d5e46047e04c680e6de2c304ee92147459f0ce73ebd1012ca",
+      "sha256": "02e06749f5fb3dfeeb4c26f8a420dec17faa937af8514d104c926a68922cbfd7",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "a911160a0ab87c6d5e46047e04c680e6de2c304ee92147459f0ce73ebd1012ca",
+      "source_sha256": "02e06749f5fb3dfeeb4c26f8a420dec17faa937af8514d104c926a68922cbfd7",
       "transform": "copy"
     },
     {
@@ -209,16 +211,16 @@
     },
     {
       "path": "modules/prompt/api.py",
-      "sha256": "2a91dec054851e969c4f44620f21a5be75e5cf5d744fca49d21aef78b4e5d22e",
+      "sha256": "a9db51208273c720232639dea83683b4d8a58bbf8ed76291aa16b09e83d5272b",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/api.py",
-      "source_sha256": "2a91dec054851e969c4f44620f21a5be75e5cf5d744fca49d21aef78b4e5d22e",
+      "source_sha256": "a9db51208273c720232639dea83683b4d8a58bbf8ed76291aa16b09e83d5272b",
       "transform": "copy"
     },
     {
       "path": "modules/prompt/core.py",
-      "sha256": "011745d4a0630d55b931a6b659d9d6c20efe767dae3bde0392ad4dbe0ff8e605",
+      "sha256": "abc864b9885ca263db41c3b695419ee83ca0c9deb0e2008a265e2d80ec9d68b2",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/core.py",
-      "source_sha256": "011745d4a0630d55b931a6b659d9d6c20efe767dae3bde0392ad4dbe0ff8e605",
+      "source_sha256": "abc864b9885ca263db41c3b695419ee83ca0c9deb0e2008a265e2d80ec9d68b2",
       "transform": "copy"
     },
     {
@@ -236,6 +238,13 @@
       "transform": "copy"
     },
     {
+      "path": "modules/prompt/styles.py",
+      "sha256": "4e183b94ff22e0b9dce66cf32fd803f51c2d2f5cb8096b12c268a22a42cb5b12",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/styles.py",
+      "source_sha256": "4e183b94ff22e0b9dce66cf32fd803f51c2d2f5cb8096b12c268a22a42cb5b12",
+      "transform": "copy"
+    },
+    {
       "path": "web/prompt.js",
       "sha256": "03e1d5b9acb45fb045100da676535eb1b1b03f24c1c298270a284127bebe1750",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/main.js",
@@ -244,16 +253,16 @@
     },
     {
       "path": "web/prompt/node.mjs",
-      "sha256": "9054e41f56b492de0b91932f2eecc0e3e3031e1440ed0d5230faea8cd7aab1a0",
+      "sha256": "1b540bd5a108340bc609123199d03ae623f1b56c0b7d813ff182960a0f18a7ff",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/node.js",
-      "source_sha256": "82a1961f4fa7264b09a9c9bff887f729f04a3a00802850a17ed37812f9a31c77",
+      "source_sha256": "8c8ff0a5ec9bb09a245f6fc0b21a14b2e38be2f3b17192f4d0a158796dee1049",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/prompt/state.mjs",
-      "sha256": "b21e7c41b01e66b5eb74f9c70bb273191a100ece4de5b55e2693b8e83fb70d47",
+      "sha256": "9168aae816f7c69590bc0f88d4760d4d877634558b65b59ac2bcdda6ece8a2d7",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/state.js",
-      "source_sha256": "b21e7c41b01e66b5eb74f9c70bb273191a100ece4de5b55e2693b8e83fb70d47",
+      "source_sha256": "9168aae816f7c69590bc0f88d4760d4d877634558b65b59ac2bcdda6ece8a2d7",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
@@ -264,10 +273,17 @@
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
+      "path": "web/prompt/styles.mjs",
+      "sha256": "3fe14a6efae5582d6bdf4bd2338c2bf6e02e07aae95293298e6afbd91f9adf48",
+      "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/styles.js",
+      "source_sha256": "590f2596c6e5f0755310af1d97fcb18941e740f46a33a5dcda6276127f1f9cbf",
+      "transform": "helpers .js -> .mjs; relocate entry asset imports"
+    },
+    {
       "path": "web/prompt/style.css",
-      "sha256": "ebe23b601f65c7ffad97da8ca97e6da0ea4e2856cd1beeaef3eb421ba4c8d7c1",
+      "sha256": "957998f891c9d1c665643b56b09926c5b46c3bf5449e6cfa78465f64de3ba7be",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/style.css",
-      "source_sha256": "ebe23b601f65c7ffad97da8ca97e6da0ea4e2856cd1beeaef3eb421ba4c8d7c1",
+      "source_sha256": "957998f891c9d1c665643b56b09926c5b46c3bf5449e6cfa78465f64de3ba7be",
       "transform": "copy"
     },
     {
