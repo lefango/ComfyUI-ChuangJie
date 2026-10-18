@@ -1,6 +1,6 @@
 [project]
 name = "chuangjie"
-version = "0.3.1"
+version = "0.3.2"
 description = "Visual LoRA, prompt, and image saving nodes for ComfyUI."
 license = { file = "LICENSE" }
 dependencies = []

@@ -59,7 +59,7 @@ def register_routes(routes, get_store):
     @guarded
     async def status(request):
         get_store(request)
-        return web.json_response({"ok": True, "version": "0.2.1", "schema": 2})
+        return web.json_response({"ok": True, "version": "0.4.0", "schema": 2})
 
     @routes.get(PREFIX + "/styles")
     @guarded

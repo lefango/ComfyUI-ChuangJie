@@ -224,3 +224,18 @@ def merge(positive="", negative="", config_value=EMPTY_CONFIG, positive_extra=""
                 base["text"] = block
         output[side] = base
     return output
+
+
+def merge_selected(positive="", negative="", config_value=EMPTY_CONFIG, positive_extra="", negative_extra="",
+                   *, user=True, extra=False, presets=False, styles=False):
+    """Merge only the chosen source groups for the dedicated plain-text outputs."""
+    snapshot = config(config_value)
+    selected = dict(snapshot)
+    if not presets:
+        selected["presets"] = []
+    if snapshot.get("schema") == 2:
+        if not styles:
+            selected["styles"] = []
+        selected["style_enabled"] = bool(styles and snapshot["style_enabled"])
+    return merge(positive if user else "", negative if user else "", selected,
+                 positive_extra if extra else "", negative_extra if extra else "")

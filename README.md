@@ -2,17 +2,16 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-创界提供 LoRA 管理、提示词管理和可视化保存图像三个 ComfyUI 节点。提示词模块 0.2.1 新增图片风格选择、全部/收藏页签、收藏持久化和风格快照。当前版本 **0.3.1**。
+创界提供 LoRA 管理、提示词管理和可视化保存图像三个 ComfyUI 节点。当前版本 **0.3.2**，集成提示词管理器 **0.4.0**。
 
-## 0.3.1 更新 | Changes
+## 0.3.2 更新 | Changes
 
-- 提示词节点新增图片风格选择，以及点击切换的全部风格 / 收藏风格；收藏独立于选中并持久保存在当前用户目录。
-- 支持本地导入和自定义风格、分类搜索、最多三项多选、排序和整体开关；发行包不携带个人风格库或第三方缩略图。
-- 拼接方式为用户词在前 / 风格在前；预设与风格补充可折叠，并可复制去重后的纯文本，不带来源标签。
-- 保留正负双 STRING、旧工作流和输入中文标签。旧版专用格式兼容为普通风格在前。
-- 已验证 Classic、Nodes 2.0、保存重载、实际文本执行和 ZIP 完整性。风格功能的 0.2.0 阶段另通过 LoRA → 提示词 → CLIP → 采样出图；0.3.1 修复未重复做模型采样。
+- 新增独立正面文本、负面文本输出，可与自动切换的文本 / CONDITIONING 主输出同时使用，并连接到下游提示词节点。
+- 文本输出可按需启用，并选择用户输入、上游补充、预设和风格作为来源；未启用时不影响主输出。
+- 保留图片风格选择、收藏持久化、旧工作流兼容、中文端口标签和提示词快照。
+- 本地独立提示词模块 0.4.0 已完成其页面与执行验收；主插件 0.3.2 安装包由 modules.json 白名单重新装配并校验。
 
-The prompt node now supports a visual style picker, persistent favorites, local import and custom styles. Supplements can be collapsed and copied as plain text. Styles use a single All/Favorites view, with user-first or style-first ordering. User libraries, favorites and imported covers are excluded from the release ZIP.
+The prompt node adds separate positive and negative text outputs for downstream prompt nodes. These can run alongside the main outputs, which switch between text and CONDITIONING based on their connections. Choose which prompt sources feed the text outputs. Existing styles, favorites, Chinese labels and saved workflows remain supported. User libraries, favorites and imported covers stay out of the release ZIP.
 
 ## 界面预览 | Interface preview
 
@@ -36,14 +35,14 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.3.1.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.1.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
+| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.3.2.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.2.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
 
 ## 安装（适合新手）
 
-1. 下载上方的 `ComfyUI-ChuangJie-0.3.1.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
+1. 下载上方的 `ComfyUI-ChuangJie-0.3.2.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
 2. 先关闭 ComfyUI，再把 ZIP 解压到 `ComfyUI/custom_nodes/`。
 3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
 4. 启动 ComfyUI，并刷新浏览器页面。
@@ -76,12 +75,12 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.3.1.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.1.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
+- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.3.2.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.3.2.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
 
-1. Download `releases/ComfyUI-ChuangJie-0.3.1.zip` and verify `releases/SHA256SUMS.txt`.
+1. Download `releases/ComfyUI-ChuangJie-0.3.2.zip` and verify `releases/SHA256SUMS.txt`.
 2. Stop ComfyUI and extract the ZIP into `ComfyUI/custom_nodes/`.
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.

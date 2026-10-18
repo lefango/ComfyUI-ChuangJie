@@ -9,7 +9,12 @@ export function renderStyleSummary(parent, getConfig, setConfig) {
     toggle.type = "checkbox"; toggle.checked = c.style_enabled; toggle.ariaLabel = "风格启用";
     toggle.onchange = () => { const value = getConfig(); value.style_enabled = toggle.checked; setConfig(value); };
     label.prepend(toggle); parent.append(label);
-    const selected = el("div", "pm-style-selected"); parent.append(selected);
+    const details = el("details", "pm-style-details");
+    details.open = c.style_enabled;
+    const count = c.styles.length;
+    const summary = el("summary", "", count ? `风格设置 · ${count} 项${c.style_enabled ? "" : " · 未启用"}` : "风格设置 · 未选择");
+    details.append(summary);
+    const selected = el("div", "pm-style-selected");
     for (const [index, s] of c.styles.entries()) {
         const chip = el("div", "pm-style-chip"); chip.append(el("span", "", `${index + 1}. ${s.name}`));
         const up = button("↑", () => { const v = getConfig(); [v.styles[index - 1], v.styles[index]] = [v.styles[index], v.styles[index - 1]]; setConfig(v); });
@@ -18,11 +23,13 @@ export function renderStyleSummary(parent, getConfig, setConfig) {
         chip.append(up, remove); selected.append(chip);
     }
     if (!c.styles.length) selected.append(el("span", "pm-muted", "未选择风格，点击“选择风格”浏览"));
+    details.append(selected);
     const order = el("select"); order.ariaLabel = "风格拼接方式";
     for (const [value, title] of [["user", "用户词在前"], ["style", "风格在前"]]) order.append(new Option(title, value));
     order.value = c.style_order;
     order.onchange = () => { const v = getConfig(); v.style_order = order.value; setConfig(v); };
-    const field = el("label", "pm-field", "拼接方式"); field.append(order); parent.append(field);
+    const field = el("label", "pm-field", "拼接方式"); field.append(order); details.append(field);
+    parent.append(details);
 }
 
 export async function openStyles(client, getConfig, setConfig) {

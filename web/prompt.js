@@ -53,11 +53,20 @@ api.addEventListener("execution_success", async event => {
 });
 // Translate presentation only: names remain stable for workflow/API compatibility.
 function localizeInputLabels(node) {
-    const labels = {"positive_extra": "正面补充提示词", "negative_extra": "负面补充提示词", "positive": "正面提示词", "negative": "负面提示词", "config": "预设配置"};
+    const labels = {"positive_extra": "正面补充提示词", "negative_extra": "负面补充提示词", "positive": "正面提示词", "negative": "负面提示词", "config": "预设配置", "clip": "CLIP"};
     for (const input of node.inputs || []) {
         if (Object.hasOwn(labels, input.name)) input.label = labels[input.name];
     }
     node.setDirtyCanvas?.(true, true);
+}
+function hideInternalWidgets(node) {
+    for (const name of ["positive", "negative", "config", "text_output_enabled", "text_output_user",
+        "text_output_extra", "text_output_presets", "text_output_styles"]) {
+        const widget = node.widgets?.find(w => w.name === name);
+        if (!widget) continue;
+        widget.hidden = true; widget.options ||= {}; widget.options.hidden = true;
+        if (widget.inputEl) widget.inputEl.style.display = "none";
+    }
 }
 
 app.registerExtension({
@@ -65,12 +74,7 @@ app.registerExtension({
     nodeCreated(node) {
         if (node.comfyClass !== "PromptManager") return;
         localizeInputLabels(node);
-        for (const name of ["positive", "negative", "config"]) {
-            const widget = node.widgets?.find(w => w.name === name);
-            if (!widget) continue;
-            widget.hidden = true; widget.options ||= {}; widget.options.hidden = true;
-            if (widget.inputEl) widget.inputEl.style.display = "none";
-        }
+        hideInternalWidgets(node);
         const view = new PromptView(node, client); views.add(new WeakRef(view));
         const onExecuted = node.onExecuted;
         node.onExecuted = function (message) { onExecuted?.call(this, message); view.executed(message); };
@@ -79,6 +83,6 @@ app.registerExtension({
         node.setSize([Math.max(node.size[0], 620), Math.max(node.size[1], 860)]);
     },
     loadedGraphNode(node) {
-        if (node.comfyClass === "PromptManager") localizeInputLabels(node);
+        if (node.comfyClass === "PromptManager") { localizeInputLabels(node); hideInternalWidgets(node); }
     },
 });

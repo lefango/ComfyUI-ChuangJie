@@ -11,8 +11,10 @@ export class PromptView {
         const toolbar = el("div", "pm-toolbar");
         toolbar.append(button("管理预设", () => openManager(client, () => this.config(), c => this.setConfig(c))),
             button("选择风格", () => openStyles(client, () => this.config(), c => this.setConfig(c))));
+        this.encodingBadge = el("div", "pm-encoder-badge", "未连接条件输入 · 输出正负提示词");
+        this.textOutputControls = this.createTextOutputControls();
         this.styleSummary = el("div", "pm-node-styles");
-        this.element.append(toolbar, this.styleSummary, this.status, this.combo);
+        this.element.append(toolbar, this.encodingBadge, this.textOutputControls.element, this.styleSummary, this.status, this.combo);
         for (const side of ["positive", "negative"]) this.createSide(side);
         const widget = node.addDOMWidget("prompt_manager_ui", "prompt-manager", this.element, {
             serialize: false, hideOnZoom: false, getMinHeight: () => 760, getHeight: () => 760,
@@ -37,9 +39,62 @@ export class PromptView {
             n.inputs?.map(i => [i.name, i.link])]) || []);
     }
     inputs() {
-        return { positive: this.native("positive").value, negative: this.native("negative").value, config: this.native("config").value };
+        return {
+            positive: this.native("positive").value, negative: this.native("negative").value,
+            config: this.native("config").value,
+            text_output_enabled: Boolean(this.native("text_output_enabled")?.value),
+            text_output_user: Boolean(this.native("text_output_user")?.value),
+            text_output_extra: Boolean(this.native("text_output_extra")?.value),
+            text_output_presets: Boolean(this.native("text_output_presets")?.value),
+            text_output_styles: Boolean(this.native("text_output_styles")?.value),
+        };
+    }
+    createTextOutputControls() {
+        const panel = el("section", "pm-text-output");
+        const header = el("div", "pm-text-output-header");
+        const enabled = el("input"); enabled.type = "checkbox"; enabled.ariaLabel = "启用独立正负文本输出";
+        const title = el("span", "", "启用独立正负文本输出");
+        const toggle = el("label", "pm-style-switch pm-text-output-toggle"); toggle.append(enabled, title);
+        header.append(toggle, el("span", "pm-muted", "文本输出口：正面文本 / 负面文本"));
+        const options = el("div", "pm-text-output-sources");
+        const choices = [
+            ["text_output_user", "用户输入"], ["text_output_extra", "上游补充"],
+            ["text_output_presets", "预设"], ["text_output_styles", "风格"],
+        ].map(([name, label]) => {
+            const input = el("input"); input.type = "checkbox"; input.ariaLabel = `文本输出包含${label}`;
+            const wrapper = el("label", "pm-text-output-choice"); wrapper.append(input, el("span", "", label));
+            input.addEventListener("change", () => { this.write(name, input.checked); this.update(); });
+            return { name, input, wrapper };
+        });
+        for (const choice of choices) options.append(choice.wrapper);
+        const hint = el("p", "pm-muted", "可多选；关闭时文本输出口为空。主输出仍按下游自动切换文本或 CONDITIONING。");
+        panel.append(header, options, hint);
+        enabled.addEventListener("change", () => { this.write("text_output_enabled", enabled.checked); this.update(); });
+        return { element: panel, enabled, choices, options, hint };
+    }
+    syncTextOutputControls() {
+        const { enabled, choices, options, hint } = this.textOutputControls;
+        const active = Boolean(this.native("text_output_enabled")?.value);
+        enabled.checked = active;
+        options.hidden = !active;
+        hint.hidden = !active;
+        for (const { name, input } of choices) {
+            input.checked = Boolean(this.native(name)?.value);
+            input.disabled = !active;
+        }
+        this.textOutputControls.element.classList.toggle("pm-text-output-disabled", !active);
     }
     connected() { return this.node.inputs?.some(i => i.link != null && ["positive", "negative", "positive_extra", "negative_extra", "config"].includes(i.name)); }
+    conditionConnected() {
+        return this.node.outputs?.some(output => output.links?.some(id => {
+            const graph = this.node.graph;
+            const links = graph?._links || graph?.links;
+            const link = Array.isArray(links) ? links.find(item => item?.id === id) : links?.[id];
+            const target = link && graph?.getNodeById?.(link.target_id);
+            const input = target?.inputs?.find(item => item.link === id);
+            return input?.type === "CONDITIONING";
+        })) || false;
+    }
     createSide(side) {
         const label = side === "positive" ? "正面" : "负面";
         const section = el("section", `pm-side pm-${side}`); section.append(el("h3", "", `${label}提示词 · 用户输入`));
@@ -85,7 +140,14 @@ export class PromptView {
         section.append(area, actions, supplementDetails, details); this.element.append(section);
     }
     update() {
+        this.syncTextOutputControls();
         const inputs = this.inputs(), signature = JSON.stringify(inputs), graph = this.graphKey();
+        const hasClip = this.node.inputs?.some(input => input.name === "clip" && input.link != null);
+        const hasConditionConsumer = this.conditionConnected();
+        this.encodingBadge.textContent = hasConditionConsumer
+            ? (hasClip ? "已连接条件输入 · 正负输出直连 K 采样器" : "已连接条件输入 · 请连接 CLIP")
+            : "未连接条件输入 · 输出正负提示词";
+        this.encodingBadge.classList.toggle("pm-encoder-connected", Boolean(hasConditionConsumer && hasClip));
         if (this.lastExecution) {
             const stale = this.lastExecution.graph !== graph;
             for (const state of Object.values(this.sides)) state.runStatus.textContent = stale ? "最近执行结果 · 已过期，请重新执行" : "最近执行结果";
