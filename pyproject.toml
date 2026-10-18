@@ -1,0 +1,13 @@
+[project]
+name = "chuangjie"
+version = "0.1.0"
+description = "Simple visual LoRA and prompt management nodes for ComfyUI."
+license = { file = "LICENSE" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/lefango/ComfyUI-ChuangJie"
+
+[tool.comfy]
+PublisherId = "lefango"
+DisplayName = "创界 · ChuangJie"
