@@ -1,6 +1,6 @@
 {
   "name": "ComfyUI-ChuangJie",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "modules": [
     {
       "id": "lora",
@@ -62,16 +62,16 @@
   "files": [
     {
       "path": "__init__.py",
-      "sha256": "39dcae22096fea69e476500f922f9ba5db5da679230f7a083d2d865247cb526e",
+      "sha256": "0999e2ff95f686752d64393f04180a6b8fc44918887c5c38c04ab5cd4d6ab437",
       "source": "主插件/源码/runtime/__init__.py",
-      "source_sha256": "39dcae22096fea69e476500f922f9ba5db5da679230f7a083d2d865247cb526e",
+      "source_sha256": "0999e2ff95f686752d64393f04180a6b8fc44918887c5c38c04ab5cd4d6ab437",
       "transform": "copy"
     },
     {
       "path": "README.md",
-      "sha256": "3037f10dbca6226b8c57b958e6fac4424c656834970e37df41f892ddb14ff498",
+      "sha256": "a911160a0ab87c6d5e46047e04c680e6de2c304ee92147459f0ce73ebd1012ca",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "3037f10dbca6226b8c57b958e6fac4424c656834970e37df41f892ddb14ff498",
+      "source_sha256": "a911160a0ab87c6d5e46047e04c680e6de2c304ee92147459f0ce73ebd1012ca",
       "transform": "copy"
     },
     {
@@ -160,9 +160,9 @@
     },
     {
       "path": "web/lora.js",
-      "sha256": "0857be2f81eaef967f832bc19f5c2c618f2e52217a8f7429de03bbfe28ab2e5f",
+      "sha256": "ee6285e4024029c8d087f47fb8bea14febba687792bf6fdd715e9ecebfacb49b",
       "source": "模块节点/lora节点开发/源码/ComfyUI-LoRA-Manager/web/main.js",
-      "source_sha256": "79f46e981d01984876f3456d4d4e11ad2dd51730375450869602fb2aef93d390",
+      "source_sha256": "7ec4396c007922e2ca3e90dc27d6a91dc4cb2903413e6617caedb48728abce23",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
@@ -237,9 +237,9 @@
     },
     {
       "path": "web/prompt.js",
-      "sha256": "34d5d229bb440e28374a89c60a40baf573fbf3a575e063ee942c0c10f54705f7",
+      "sha256": "03e1d5b9acb45fb045100da676535eb1b1b03f24c1c298270a284127bebe1750",
       "source": "模块节点/提示词节点开发/源码/ComfyUI-Prompt-Manager/web/main.js",
-      "source_sha256": "3cc5fa31099a3eeaee0b51186c11b56622abd12d73b37f8fecbc0c7dec92e7f7",
+      "source_sha256": "fbdfa547983911b41e0c47bc65121d1370224297cd585d173c02f48584e924eb",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
@@ -300,9 +300,9 @@
     },
     {
       "path": "web/visual_save.js",
-      "sha256": "cc143bce946898bd3b0bd62d4b77f32176886bf1c108b9bb63245aa4bb27a220",
+      "sha256": "f8570b225bc1030395cac2d0ad5bd9d76ed02ebcefd1fdf97ca8f3cbd914309c",
       "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/web/main.js",
-      "source_sha256": "c4e16d63d93ead24ee2f28c8a07c3a9590f42483d8943b7e05eec09d0711b23f",
+      "source_sha256": "b7eaea4b87d1cb747f6cfcc2891c1aef3082e2fd62c96a241d557f13b115b916",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {

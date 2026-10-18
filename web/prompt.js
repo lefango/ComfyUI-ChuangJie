@@ -51,10 +51,20 @@ api.addEventListener("execution_success", async event => {
         }
     } catch { /* Keep the editable prompt and explicitly absent execution result. */ }
 });
+// Translate presentation only: names remain stable for workflow/API compatibility.
+function localizeInputLabels(node) {
+    const labels = {"positive_extra": "正面补充提示词", "negative_extra": "负面补充提示词", "positive": "正面提示词", "negative": "负面提示词", "config": "预设配置"};
+    for (const input of node.inputs || []) {
+        if (Object.hasOwn(labels, input.name)) input.label = labels[input.name];
+    }
+    node.setDirtyCanvas?.(true, true);
+}
+
 app.registerExtension({
     name: "comfyui.prompt-manager",
     nodeCreated(node) {
         if (node.comfyClass !== "PromptManager") return;
+        localizeInputLabels(node);
         for (const name of ["positive", "negative", "config"]) {
             const widget = node.widgets?.find(w => w.name === name);
             if (!widget) continue;
@@ -65,7 +75,10 @@ app.registerExtension({
         const onExecuted = node.onExecuted;
         node.onExecuted = function (message) { onExecuted?.call(this, message); view.executed(message); };
         const onConfigure = node.onConfigure;
-        node.onConfigure = function (...args) { onConfigure?.apply(this, args); view.update(); };
+        node.onConfigure = function (...args) { onConfigure?.apply(this, args); localizeInputLabels(this); view.update(); };
         node.setSize([Math.max(node.size[0], 620), Math.max(node.size[1], 860)]);
+    },
+    loadedGraphNode(node) {
+        if (node.comfyClass === "PromptManager") localizeInputLabels(node);
     },
 });

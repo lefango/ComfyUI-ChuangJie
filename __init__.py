@@ -22,7 +22,7 @@ class VisualSaveImage(_VisualSaveImage):
 NODE_CLASS_MAPPINGS = {"LoRAManager": LoRAManager, "PromptManager": PromptManager, "VisualSaveImage": VisualSaveImage}
 NODE_DISPLAY_NAME_MAPPINGS = {"LoRAManager": "LoRA 管理器", "PromptManager": "提示词管理器", "VisualSaveImage": "可视化保存图像"}
 WEB_DIRECTORY = "./web"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 def _register():

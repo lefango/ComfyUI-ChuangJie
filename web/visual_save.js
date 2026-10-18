@@ -259,10 +259,20 @@ api.addEventListener("execution_error", event => {
     }
 });
 
+// Translate presentation only: names remain stable for workflow/API compatibility.
+function localizeInputLabels(node) {
+    const labels = {"images": "图像", "filename_prefix": "文件名前缀", "subfolder": "保存子目录"};
+    for (const input of node.inputs || []) {
+        if (Object.hasOwn(labels, input.name)) input.label = labels[input.name];
+    }
+    node.setDirtyCanvas?.(true, true);
+}
+
 app.registerExtension({
     name: "comfyui.visual-save-image",
     nodeCreated(node) {
         if (node.comfyClass !== "VisualSaveImage") return;
+        localizeInputLabels(node);
         // The custom pager owns the preview; keep ui.images for native history.
         // This is also how ComfyUI's own custom image widgets suppress duplicates.
         node.hideOutputImages = true;
@@ -278,7 +288,10 @@ app.registerExtension({
         const view = new SaveView(node); views.add(new WeakRef(view));
         node.onExecuted = function(message) { view.executed(message); };
         const configure = node.onConfigure;
-        node.onConfigure = function(...args) { configure?.apply(this, args); view.sync(); };
+        node.onConfigure = function(...args) { configure?.apply(this, args); localizeInputLabels(this); view.sync(); };
         node.setSize([Math.max(node.size[0], 490), Math.max(node.size[1], 540)]);
+    },
+    loadedGraphNode(node) {
+        if (node.comfyClass === "VisualSaveImage") localizeInputLabels(node);
     },
 });

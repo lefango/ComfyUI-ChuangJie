@@ -10,10 +10,20 @@ const client = new Client((path, options) => api.fetchApi(path, options),
     (key) => api.apiURL(`/lora-manager/v1/covers/${key}`));
 const previews = new WeakMap();
 
+// Translate presentation only: names remain stable for workflow/API compatibility.
+function localizeInputLabels(node) {
+    const labels = {"model": "模型", "clip": "CLIP", "config": "LoRA 配置"};
+    for (const input of node.inputs || []) {
+        if (Object.hasOwn(labels, input.name)) input.label = labels[input.name];
+    }
+    node.setDirtyCanvas?.(true, true);
+}
+
 app.registerExtension({
     name: "comfyui.lora-manager",
     nodeCreated(node) {
         if (node.comfyClass !== "LoRAManager") return;
+        localizeInputLabels(node);
         const config = node.widgets?.find((widget) => widget.name === "config");
         // Keep the native input serialized while replacing its visual surface.
         if (config) {
@@ -33,5 +43,8 @@ app.registerExtension({
         });
         previews.set(node, preview);
     },
-    loadedGraphNode(node) { previews.get(node)?.update(true); },
+    loadedGraphNode(node) {
+        if (node.comfyClass !== "LoRAManager") return;
+        localizeInputLabels(node); previews.get(node)?.update(true);
+    },
 });

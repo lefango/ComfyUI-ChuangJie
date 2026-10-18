@@ -2,7 +2,7 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-创界提供 LoRA 管理、提示词管理和可视化保存图像三个 ComfyUI 节点。当前版本 **0.2.0**。
+创界提供 LoRA 管理、提示词管理和可视化保存图像三个 ComfyUI 节点。当前版本 **0.2.1**。
 
 ## 界面预览 | Interface preview
 
@@ -26,14 +26,14 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.2.0.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.2.0.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
+| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.2.1.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.2.1.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
 
 ## 安装（适合新手）
 
-1. 点击上面的“成品：ComfyUI-ChuangJie-0.2.0.zip”下载成品包。
+1. 点击上面的“成品：ComfyUI-ChuangJie-0.2.1.zip”下载成品包。
 2. 先关闭 ComfyUI，再把 ZIP 解压到 `ComfyUI/custom_nodes/`。
 3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
 4. 启动 ComfyUI，并刷新浏览器页面。
@@ -66,12 +66,12 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.2.0.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.2.0.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
+- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.2.1.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.2.1.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
 
-1. Download `releases/ComfyUI-ChuangJie-0.2.0.zip` from this repository.
+1. Download `releases/ComfyUI-ChuangJie-0.2.1.zip` from this repository.
 2. Stop ComfyUI and extract the ZIP into `ComfyUI/custom_nodes/`.
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.
