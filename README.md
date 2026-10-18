@@ -48,7 +48,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 ```
 
-通过 Git 安装后，在 Manager 点击更新；或在插件文件夹中执行 `git pull`。GitHub 发布不代表插件已经出现在 Manager 搜索目录中；目录收录/Registry 发布会在仓库发布后单独完成。
+通过 Git 安装后，在 Manager 点击更新；或在插件文件夹中执行 `git pull`。本插件已经发布到 Comfy Registry。目录同步可能需要一点时间；如果暂时搜不到，请稍后刷新 Manager，或先用上方成品 ZIP。
 
 ## 插件做什么
 
@@ -79,7 +79,7 @@ If you previously installed this project's LoRA or Prompt nodes as standalone pa
 
 ### Install or update with ComfyUI Manager
 
-Search for `ComfyUI-ChuangJie` in Manager and choose Install or Update. If it is not listed yet, use the ZIP above or clone this repository into `ComfyUI/custom_nodes/`. A GitHub publication alone does not add a node to the Manager catalog; registry/catalog listing is a separate step.
+Search for `ComfyUI-ChuangJie` in Manager and choose Install or Update. If it is not listed yet, use the ZIP above or clone this repository into `ComfyUI/custom_nodes/`. This plugin has been published to Comfy Registry. Catalog synchronization may take a little while; refresh Manager later if it does not appear immediately, or use the ready-to-install ZIP above.
 
 ### What it does
 
