@@ -2,7 +2,25 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-把 LoRA 管理器和提示词管理器整合成一个 ComfyUI 插件。当前版本 **0.1.0**，包含 LoRA 管理器 0.2.1 和提示词管理器 0.1.1。
+创界把 LoRA 管理和提示词管理做成 ComfyUI 中简单、直观的可视化界面，并可直接连接到工作流节点。当前版本 **0.1.0**。
+
+## 界面预览 | Interface preview
+
+以下为插件在 ComfyUI 中的实际运行截图；LoRA 卡片和提示词条目是用于展示的演示资料。
+
+**节点入口：在“创界节点”分类下选择管理工具。**
+
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/node-categories.jpg" width="850" alt="创界节点分类入口" /></p>
+
+**LoRA 管理：浏览卡片、分类和当前启用项。**
+
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/lora-manager.jpg" width="850" alt="LoRA 管理器界面" /></p>
+
+**提示词管理：可视化编辑正面与负面提示词、管理预设。**
+
+<p align="center"><img src="https://raw.githubusercontent.com/lefango/ComfyUI-ChuangJie/main/docs/images/prompt-manager.jpg" width="850" alt="提示词管理器界面" /></p>
+
+These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt entries are demo data.
 
 ## 新手先看：成品还是源码？
 
@@ -20,7 +38,7 @@
 3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
 4. 启动 ComfyUI，并刷新浏览器页面。
 
-如果压缩包解压后多套了一层文件夹，请把内层 `ComfyUI-ChuangJie` 文件夹移到 `custom_nodes` 中。不要同时安装旧的 `ComfyUI-LoRA-Manager` 或 `ComfyUI-Prompt-Manager` 独立包。
+如果压缩包解压后多套了一层文件夹，请把内层 `ComfyUI-ChuangJie` 文件夹移到 `custom_nodes` 中。若你之前单独安装过本项目的 LoRA 或提示词节点，请先停用旧的独立版本，再使用创界。
 
 ## 在 ComfyUI Manager 中安装或更新
 
@@ -34,8 +52,8 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ## 插件做什么
 
-- **LoRA 管理器**：在节点选择器的“创界节点 / 模型工具”中管理 LoRA；可把触发词传给提示词管理器。
-- **提示词管理器**：在“创界节点 / 提示词工具”中管理正面、负面提示词，并连接到 CLIP 文本编码。
+- **可视化管理 LoRA**：在节点选择器的“创界节点 / 模型工具”中浏览和管理 LoRA；可把触发词传给提示词工具。
+- **可视化管理提示词**：在“创界节点 / 提示词工具”中编辑正面、负面提示词和预设，并连接到 CLIP 文本编码。
 
 旧工作流继续使用 `LoRAManager` 和 `PromptManager` 节点标识。插件公共资料保存在 ComfyUI 用户目录的 `lora-manager` 与 `prompt-manager` 文件夹中；升级不会删除这些资料。请勿手动删除它们。
 
@@ -57,7 +75,7 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.
 
-Do not keep the old standalone `ComfyUI-LoRA-Manager` or `ComfyUI-Prompt-Manager` enabled alongside this pack. Their API routes may conflict.
+If you previously installed this project's LoRA or Prompt nodes as standalone packages, disable those older copies before using ChuangJie.
 
 ### Install or update with ComfyUI Manager
 
@@ -65,8 +83,8 @@ Search for `ComfyUI-ChuangJie` in Manager and choose Install or Update. If it is
 
 ### What it does
 
-- **LoRA Manager** manages LoRAs under “ChuangJie Nodes / Model Tools” and can pass trigger words to the Prompt Manager.
-- **Prompt Manager** manages positive and negative prompts under “ChuangJie Nodes / Prompt Tools” and connects them to CLIP text encoders.
+- **Visual LoRA management:** Browse and manage LoRAs under “ChuangJie Nodes / Model Tools”; trigger words can be passed to the prompt tool.
+- **Visual prompt management:** Edit positive and negative prompts and presets under “ChuangJie Nodes / Prompt Tools,” then connect them to CLIP text encoders.
 
 Existing workflows retain the `LoRAManager` and `PromptManager` node identifiers. User data stays in the ComfyUI user folders `lora-manager` and `prompt-manager` when the plugin is updated or removed.
 
