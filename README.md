@@ -2,13 +2,20 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前主插件版本 **0.5.12**，集成集合控制台 **0.2.12** 和可视化保存图像 **0.1.0**。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
+当前主插件版本 **0.5.13**，集成集合控制台 **0.2.14** 和可视化保存图像 **0.1.0**。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
 
 集合控制台仅对 Qwen Image 2.1 开启原生图像编辑；编辑图在 1080×1920 边界内时按 8 像素向下对齐，任一边超出时等比缩至该边界并让宽高各自按 8 像素对齐。普通小图不放大；缩放、对齐或极端比例使任一边不足 16 像素时会提升到 16，以满足 `PromptStage` 的最小尺寸。遮罩同步缩放。Qwen 原生编码器随后按 32 像素步幅处理参考 latent；最终图像的遮罩黑区逐像素保留原图。其它模型忽略编辑图片与遮罩。
 
 提示词界面继续通过 `/prompt-manager/v1` 工作，并沿用 ComfyUI 用户目录下的 `prompt-manager` 资料。已有提示词资料无需迁移。
 
-## 0.5.12 更新
+## 0.5.13 更新
+
+- 集合控制台新增“正面条件”“负面条件”和首轮采样后的“Latent”输出，端口追加在旧“图像”输出之后，保持已有工作流端口编号。
+- 条件输出复用内部首轮 KSampler 实际使用的正负 CONDITIONING；Qwen Image 2.1 图像编辑连接 Qwen 编码器条件。连接新增输出时保留首轮内部采样，Latent 可接外部 KSampler 继续二次采样。
+- Classic 与 Nodes 2.0 使用中文端口标签；旧工作流加载与输出连线保留。
+- 集合控制台 0.2.14 已装配到主插件 0.5.13；GitHub 与 Comfy Registry 发布状态见项目交付记录。
+
+## 0.5.12 历史更新
 
 - 集合控制台从独立源码更新至 0.2.12；提示词管理 API 和界面随集合控制台装配，避免单独重复注册。
 - 补齐集合控制台预览事件与随机种子前端依赖的装配白名单，避免入口模块因缺失依赖加载失败、节点退回原始字段界面。
@@ -57,9 +64,9 @@ The prompt node adds separate positive and negative text outputs for downstream 
 
 ## 界面预览 | Interface preview
 
-以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前 0.5.12 将模型、LoRA 与提示词管理整合在集合控制台中；截图仅供历史参考。
+以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前 0.5.13 将模型、LoRA 与提示词管理整合在集合控制台中；截图仅供历史参考。
 
-The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.12 integrates model, LoRA and prompt management in the collection console; treat these screenshots as historical references.
+The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.13 integrates model, LoRA and prompt management in the collection console; treat these screenshots as historical references.
 
 **节点入口：在“创界节点”分类下选择管理工具。**
 
@@ -79,14 +86,14 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.5.12.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.12.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
+| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.5.13.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.13.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
 
 ## 安装（适合新手）
 
-1. 下载上方的 `ComfyUI-ChuangJie-0.5.12.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
+1. 下载上方的 `ComfyUI-ChuangJie-0.5.13.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
 2. 先关闭 ComfyUI，再把 ZIP 解压到 `ComfyUI/custom_nodes/`。
 3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
 4. 启动 ComfyUI，并刷新浏览器页面。
@@ -118,12 +125,12 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.5.12.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.12.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
+- **Ready-to-install product:** Download [ComfyUI-ChuangJie-0.5.13.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.13.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
 
-1. Download `releases/ComfyUI-ChuangJie-0.5.12.zip` and verify `releases/SHA256SUMS.txt`.
+1. Download `releases/ComfyUI-ChuangJie-0.5.13.zip` and verify `releases/SHA256SUMS.txt`.
 2. Stop ComfyUI and extract the ZIP into `ComfyUI/custom_nodes/`.
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.

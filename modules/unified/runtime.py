@@ -131,7 +131,8 @@ def compile_prompt(data):
                         demanded.add(output_ports[value[1]]["id"])
 
             generation = state["generation"]
-            should_generate = generation["enabled"] or "image" in demanded
+            generation_outputs = {"image", "positive_conditioning", "negative_conditioning", "latent"}
+            should_generate = generation["enabled"] or bool(generation_outputs & demanded)
             if should_generate:
                 for key in ("model", "clip", "vae"):
                     if state["modules"][key]["source"] == "off":
@@ -261,6 +262,15 @@ def compile_prompt(data):
                     "negative": [qwen_task, 1] if qwen_task else [prompt_task, 1],
                     "latent_image": [qwen_task, 2] if qwen_task else latent_ref,
                     "denoise": settings["denoise"]})
+                condition_task = qwen_task or prompt_task
+                for port_id, ref in (
+                    ("positive_conditioning", [condition_task, 0]),
+                    ("negative_conditioning", [condition_task, 1]),
+                    ("latent", [sampler_task, 0]),
+                ):
+                    if port_id in demanded:
+                        output_index = next(i for i, output in enumerate(output_ports) if output["id"] == port_id)
+                        replacements[(str(mid), output_index)] = ref
                 decode_task = add("vae-decode", "VAEDecode", {"samples": [sampler_task, 0], "vae": refs["vae"]})
                 add("sample-preview", "PreviewImage", {"images": [decode_task, 0]})
                 if qwen_edit_enabled and edit_mask_enabled:
@@ -305,8 +315,8 @@ class UnifiedManager:
     # The console's real ports are state-dependent and created by the frontend.
     # Keep wildcard placeholders so a failed prompt expansion can still validate
     # links and reach VALIDATE_INPUTS; successful prompts remove this node first.
-    RETURN_TYPES = ("*", "*", "*", "*")
-    RETURN_NAMES = ("output_0", "output_1", "output_2", "output_3")
+    RETURN_TYPES = ("*", "*", "*", "*", "*", "*", "*")
+    RETURN_NAMES = ("output_0", "output_1", "output_2", "output_3", "output_4", "output_5", "output_6")
 
     @classmethod
     def INPUT_TYPES(cls):

@@ -1,1 +1,1 @@
-55813b591d8c12cfb6bdd2c3fef4ffe3c5c0c477a6147a4aa43d81977ad4fffb  ComfyUI-ChuangJie-0.5.12.zip
+66a984b82eec94d00d62a542bb4bffed226d7085c618c5e1559f878ab3c9f3e0  ComfyUI-ChuangJie-0.5.13.zip
