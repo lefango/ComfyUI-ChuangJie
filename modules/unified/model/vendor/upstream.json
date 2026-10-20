@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/city96/ComfyUI-GGUF",
+  "revision": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a",
+  "license": "Apache-2.0",
+  "original_sha256": {
+    "loader.py": "ffff39d209ce22654e67378b80c6a3ca3d349cf8f00ec267085bd16e194730c2",
+    "ops.py": "b927e24a7b00c181e9511900fb5afde45464793cf460e1d39a5e736ba093ce64",
+    "dequant.py": "215369438d96c372c09eb8701eec3c3b0348084c96dd3ea83872601ebed42017",
+    "nodes.py": "16be3b08b13de6279fc432addc628320019fcb24963cbc6b52b248de8f06316e",
+    "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "modifications": {
+    "nodes.py": "Disabled global folder registration; loaders used through private path-resolving adapter."
+  }
+}

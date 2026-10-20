@@ -1,9 +1,9 @@
 [project]
 name = "chuangjie"
-version = "0.3.3"
-description = "Visual LoRA, prompt, and image saving nodes for ComfyUI."
+version = "0.5.12"
+description = "Integrated model, LoRA, prompt management, and image saving for ComfyUI."
 license = { file = "LICENSE" }
-dependencies = []
+dependencies = ["gguf>=0.13.0,<0.19", "sentencepiece>=0.2.0", "protobuf>=4.25"]
 
 [project.urls]
 Repository = "https://github.com/lefango/ComfyUI-ChuangJie"
