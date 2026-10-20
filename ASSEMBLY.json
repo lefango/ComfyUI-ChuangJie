@@ -1,6 +1,6 @@
 {
   "name": "ComfyUI-ChuangJie",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "modules": [
     {
       "id": "visual_save",
@@ -98,16 +98,16 @@
   "files": [
     {
       "path": "__init__.py",
-      "sha256": "e8d6207aade0e8292f7bb1127d3179b7efe99527d8a284b43bcd2e8920f2c1ff",
+      "sha256": "94db73b66dc8a2dd054371bbdc8283abe2eb8f8b7930b99a303d2d761b292e58",
       "source": "主插件/源码/runtime/__init__.py",
-      "source_sha256": "e8d6207aade0e8292f7bb1127d3179b7efe99527d8a284b43bcd2e8920f2c1ff",
+      "source_sha256": "94db73b66dc8a2dd054371bbdc8283abe2eb8f8b7930b99a303d2d761b292e58",
       "transform": "copy"
     },
     {
       "path": "README.md",
-      "sha256": "40418bef231f66678fb059a477c370b69aed625e6f57383f0c45b25e86541df5",
+      "sha256": "9dd7c98059a1e1b93374660d039298d0ed2b65b01b3bfd0a85cc661b918c1921",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "40418bef231f66678fb059a477c370b69aed625e6f57383f0c45b25e86541df5",
+      "source_sha256": "9dd7c98059a1e1b93374660d039298d0ed2b65b01b3bfd0a85cc661b918c1921",
       "transform": "copy"
     },
     {
