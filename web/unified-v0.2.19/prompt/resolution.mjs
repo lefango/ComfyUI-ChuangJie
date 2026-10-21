@@ -1,15 +1,34 @@
 import { el, button, dialog } from "./ui.mjs";
 
 export const RATIOS = [
-    { id: "1:1", title: "方图", w: 1, h: 1, sizes: [[512, 512], [768, 768], [1024, 1024]] },
-    { id: "4:3", title: "横屏", w: 4, h: 3, sizes: [[768, 576], [1024, 768], [1408, 1056]] },
-    { id: "3:4", title: "竖屏", w: 3, h: 4, sizes: [[576, 768], [768, 1024], [1056, 1408]] },
-    { id: "3:2", title: "横屏", w: 3, h: 2, sizes: [[768, 512], [1152, 768], [1608, 1072]] },
-    { id: "2:3", alias: "6:9", title: "竖屏", w: 2, h: 3, sizes: [[512, 768], [768, 1152], [1072, 1608]] },
-    { id: "16:9", title: "横屏", w: 16, h: 9, sizes: [[1024, 576], [1280, 720], [1920, 1080]] },
-    { id: "9:16", title: "竖屏", w: 9, h: 16, sizes: [[576, 1024], [720, 1280], [1080, 1920]] },
+    { id: "1:1", title: "方形", w: 1, h: 1 },
+    { id: "4:5", title: "人像竖幅", w: 4, h: 5 },
+    { id: "3:4", title: "竖幅", w: 3, h: 4 },
+    { id: "2:3", title: "长竖幅", w: 2, h: 3 },
+    { id: "9:16", title: "手机全屏", w: 9, h: 16 },
+    { id: "4:3", title: "横向标准", w: 4, h: 3 },
+    { id: "3:2", title: "横向摄影", w: 3, h: 2 },
+    { id: "16:9", title: "横向宽屏", w: 16, h: 9 },
+    { id: "21:9", title: "电影宽幅", w: 21, h: 9 },
+    { id: "9:21", title: "电影竖幅", w: 9, h: 21 },
 ];
 const MAX_SIZE = 16384;
+
+export function largestSizeForRatio(widthRatio, heightRatio) {
+    const w = Number(widthRatio), h = Number(heightRatio);
+    if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1 || w > 1000 || h > 1000)
+        throw new RangeError("自定义比例须为 1 到 1000 之间的整数");
+    const square = w === h;
+    const maxWidth = square || w < h ? 1080 : 1920;
+    const maxHeight = square || w > h ? 1080 : 1920;
+    const scale = Math.min(maxWidth / w, maxHeight / h);
+    return { width: Math.floor(w * scale / 8) * 8, height: Math.floor(h * scale / 8) * 8 };
+}
+
+export function ratioShapeDimensions(widthRatio, heightRatio, maxWidth = 42, maxHeight = 54) {
+    const scale = Math.min(maxWidth / widthRatio, maxHeight / heightRatio);
+    return { width: Math.min(maxWidth, widthRatio * scale), height: Math.min(maxHeight, heightRatio * scale) };
+}
 
 export function dimensionsForRatio(widthRatio, heightRatio, longEdge) {
     const w = Number(widthRatio), h = Number(heightRatio), edge = Number(longEdge);
@@ -22,7 +41,7 @@ export function dimensionsForRatio(widthRatio, heightRatio, longEdge) {
 
 function ratioFor(width, height) {
     const ratio = width / height;
-    return RATIOS.find(item => Math.abs(ratio - item.w / item.h) < 0.012)?.id || "custom";
+    return RATIOS.find(item => Math.abs(ratio - item.w / item.h) / (item.w / item.h) < 0.015)?.id || "custom";
 }
 
 function integer(value, label, min, max) {
@@ -34,9 +53,8 @@ function integer(value, label, min, max) {
 export function openResolutionSelector(getSettings, setSettings) {
     const current = getSettings();
     const d = dialog("分辨率选择"); d.panel.classList.add("pm-resolution-dialog");
-    d.body.append(el("p", "pm-muted", "先选比例，再选内置尺寸；也可直接修改宽高。内置预设最高到 1080×1920 档，自定义尺寸可更大。"));
+    d.body.append(el("p", "pm-muted", "选择画幅比例后自动匹配最大尺寸；也可自定义比例、宽高和批次数。"));
     const grid = el("div", "pm-ratio-grid");
-    const sizeArea = el("section", "pm-resolution-sizes");
     const custom = el("section", "pm-resolution-custom");
     const width = el("input"), height = el("input"), batch = el("input");
     for (const input of [width, height]) { input.type = "number"; input.min = "16"; input.max = String(MAX_SIZE); input.step = "8"; }
@@ -45,11 +63,10 @@ export function openResolutionSelector(getSettings, setSettings) {
     width.ariaLabel = "latent 宽度"; height.ariaLabel = "latent 高度"; batch.ariaLabel = "latent 批量数";
     let selectedRatio = ratioFor(current.width, current.height);
     let ratioW = 6, ratioH = 9;
-    const ratioWInput = el("input"), ratioHInput = el("input"), longEdge = el("input");
+    const ratioWInput = el("input"), ratioHInput = el("input");
     for (const input of [ratioWInput, ratioHInput]) { input.type = "number"; input.min = "1"; input.max = "1000"; input.step = "1"; }
-    longEdge.type = "number"; longEdge.min = "16"; longEdge.max = String(MAX_SIZE); longEdge.step = "8";
-    ratioWInput.value = String(ratioW); ratioHInput.value = String(ratioH); longEdge.value = String(Math.max(current.width, current.height));
-    ratioWInput.ariaLabel = "自定义比例宽"; ratioHInput.ariaLabel = "自定义比例高"; longEdge.ariaLabel = "自定义比例长边尺寸";
+    ratioWInput.value = String(ratioW); ratioHInput.value = String(ratioH);
+    ratioWInput.ariaLabel = "自定义比例宽"; ratioHInput.ariaLabel = "自定义比例高";
 
     const ratioStatus = el("p", "pm-muted");
     const sizeStatus = el("p", "pm-muted");
@@ -57,41 +74,27 @@ export function openResolutionSelector(getSettings, setSettings) {
         ratioStatus.textContent = selectedRatio === "custom" ? "当前为自定义比例" : `当前比例：${selectedRatio}${selectedRatio === "2:3" ? "（也可写作 6:9）" : ""} · ${RATIOS.find(item => item.id === selectedRatio)?.title}`;
         for (const card of grid.querySelectorAll(".pm-ratio-card")) card.setAttribute("aria-pressed", String(card.dataset.ratio === selectedRatio));
     }
-    function setSize(w, h) {
-        width.value = String(w); height.value = String(h); selectedRatio = ratioFor(w, h); showRatio();
+    function setSize(w, h, ratio = ratioFor(w, h)) {
+        width.value = String(w); height.value = String(h); selectedRatio = ratio; showRatio();
         sizeStatus.textContent = `当前尺寸：${w} × ${h}`;
-        renderSizes();
-    }
-    function renderSizes() {
-        sizeArea.replaceChildren(el("h3", "", "选择分辨率"));
-        const ratio = RATIOS.find(item => item.id === selectedRatio);
-        if (!ratio) {
-            sizeArea.append(el("p", "pm-muted", "自定义比例请设置比例数值与长边，或直接输入宽高。"));
-            return;
-        }
-        const choices = el("div", "pm-size-options");
-        for (const [index, [w, h]] of ratio.sizes.entries()) {
-            const choice = button(`${["低", "中", "高"][index]} · ${w} × ${h}`, () => setSize(w, h));
-            choice.classList.add("pm-size-choice");
-            choice.setAttribute("aria-pressed", String(Number(width.value) === w && Number(height.value) === h));
-            choices.append(choice);
-        }
-        sizeArea.append(choices);
+        for (const card of grid.querySelectorAll(".pm-ratio-card")) card.setAttribute("aria-pressed", String(card.dataset.ratio === selectedRatio));
     }
     function chooseRatio(item) {
-        selectedRatio = item.id;
-        const [w, h] = item.sizes[1];
-        setSize(w, h);
+        const size = largestSizeForRatio(item.w, item.h);
+        setSize(size.width, size.height, item.id);
     }
     for (const item of RATIOS) {
         const card = button("", () => chooseRatio(item)); card.classList.add("pm-ratio-card"); card.dataset.ratio = item.id;
-        const shape = el("span", "pm-ratio-shape"); shape.style.aspectRatio = `${item.w} / ${item.h}`;
-        card.ariaLabel = `比例 ${item.id}，${item.title}${item.alias ? `，别名 ${item.alias}` : ""}`;
-        card.append(shape, el("strong", "", item.id), el("span", "pm-ratio-orientation", item.title));
-        if (item.alias) card.append(el("small", "", `别名 ${item.alias}`));
+        const shape = el("span", "pm-ratio-shape"), shapeSize = ratioShapeDimensions(item.w, item.h);
+        shape.style.width = `${shapeSize.width}px`; shape.style.height = `${shapeSize.height}px`;
+        shape.style.aspectRatio = `${item.w} / ${item.h}`;
+        card.ariaLabel = `比例 ${item.id}，${item.title}`;
+        const size = largestSizeForRatio(item.w, item.h);
+        card.append(shape, el("strong", "", item.id), el("span", "pm-ratio-orientation", item.title),
+            el("small", "", `${size.width} × ${size.height}`));
         grid.append(card);
     }
-    const customCard = button("自定义比例", () => { selectedRatio = "custom"; showRatio(); renderSizes(); });
+    const customCard = button("自定义比例", () => { selectedRatio = "custom"; showRatio(); });
     customCard.classList.add("pm-ratio-card", "pm-ratio-custom-card"); customCard.dataset.ratio = "custom";
     customCard.append(el("span", "pm-ratio-shape pm-ratio-shape-custom", "自"), el("strong", "", "自定义"), el("span", "pm-ratio-orientation", "任意比例")); grid.append(customCard);
 
@@ -99,11 +102,10 @@ export function openResolutionSelector(getSettings, setSettings) {
     const ratioFields = el("div", "pm-resolution-ratio-fields");
     const ratioWLabel = el("label", "pm-field", "比例宽"); ratioWLabel.append(ratioWInput);
     const ratioHLabel = el("label", "pm-field", "比例高"); ratioHLabel.append(ratioHInput);
-    const longLabel = el("label", "pm-field", "长边像素"); longLabel.append(longEdge);
-    ratioFields.append(ratioWLabel, ratioHLabel, longLabel);
+    ratioFields.append(ratioWLabel, ratioHLabel);
     const applyRatio = button("应用自定义比例", () => {
-        const size = dimensionsForRatio(ratioWInput.value, ratioHInput.value, longEdge.value);
-        selectedRatio = "custom"; setSize(size.width, size.height);
+        const size = largestSizeForRatio(ratioWInput.value, ratioHInput.value);
+        setSize(size.width, size.height, "custom");
     });
     custom.append(customTitle, ratioFields, applyRatio);
 
@@ -116,7 +118,6 @@ export function openResolutionSelector(getSettings, setSettings) {
         const w = Number(width.value), h = Number(height.value);
         if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
             selectedRatio = ratioFor(w, h); showRatio(); sizeStatus.textContent = `当前尺寸：${w} × ${h}`;
-            renderSizes();
         }
     };
     width.addEventListener("input", inputsChanged); height.addEventListener("input", inputsChanged);
@@ -129,6 +130,6 @@ export function openResolutionSelector(getSettings, setSettings) {
             setSettings({ width: w, height: h, batchSize: count }); d.close();
         } catch (e) { error.textContent = e.message; }
     }));
-    d.body.append(ratioStatus, grid, sizeArea, custom, dimensions, sizeStatus, error, actions);
-    showRatio(); renderSizes();
+    d.body.append(ratioStatus, grid, custom, dimensions, sizeStatus, error, actions);
+    showRatio();
 }

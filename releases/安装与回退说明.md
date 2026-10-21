@@ -2,11 +2,18 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前主插件 **0.5.18**，集成集合控制台 **0.2.18** 和可视化保存图像 **0.1.0**。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
+本地最新构建为 **0.5.19**，集成集合控制台 **0.2.19** 和可视化保存图像 **0.1.0**。本版为本地验收构建，未发布到远端；公开下载目前仍为 0.5.18。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
 
 集合控制台仅对 Qwen Image 2.1 开启原生图像编辑；编辑图在 1080×1920 边界内时按 8 像素向下对齐，任一边超出时等比缩至该边界并让宽高各自按 8 像素对齐。普通小图不放大；缩放、对齐或极端比例使任一边不足 16 像素时会提升到 16，以满足 `PromptStage` 的最小尺寸。遮罩同步缩放。Qwen 原生编码器随后按 32 像素步幅处理参考 latent；最终图像的遮罩黑区逐像素保留原图。其它模型忽略编辑图片与遮罩。
 
 提示词界面继续通过 `/prompt-manager/v1` 工作，并沿用 ComfyUI 用户目录下的 `prompt-manager` 资料。已有提示词资料无需迁移。
+
+## 0.5.19 本地更新
+
+- 重做集合控制台的分辨率、提示词预设和风格参考二级页面，继续使用真实 API、资料库和封面。
+- 分辨率比例卡片自动选择方向范围内的最大尺寸并按 8 像素对齐；保留自定义尺寸与批次数，采样步数和 CFG 仍在“K 采样器”。
+- 保留提示词分类/预设/当前节点组合管理，以及风格收藏、导入、编辑、多选排序和 Krea2 参考强度。
+- 不修改节点端口、配置格式、后端 API 或用户资料结构；本版仅本地构建，未发布远端。
 
 ## 0.5.18 更新
 
@@ -90,9 +97,9 @@ The prompt node adds separate positive and negative text outputs for downstream 
 
 ## 界面预览 | Interface preview
 
-以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前 0.5.18 将模型、LoRA 与提示词管理整合在集合控制台中；截图仅供历史参考。
+以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前本地 0.5.19 将模型、LoRA 与提示词管理整合在集合控制台中；截图仅供历史参考。
 
-The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.18 integrates model, LoRA and prompt management in the collection console; treat these screenshots as historical references.
+The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Local build 0.5.19 integrates model, LoRA and prompt management in the collection console; treat these screenshots as historical references.
 
 **节点入口：在“创界节点”分类下选择管理工具。**
 
