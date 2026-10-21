@@ -2,17 +2,17 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前测试版主插件 **0.5.17**，集成集合控制台 **0.2.17** 和可视化保存图像 **0.1.0**。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
+当前主插件 **0.5.17**，集成集合控制台 **0.2.17** 和可视化保存图像 **0.1.0**。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
 
 集合控制台仅对 Qwen Image 2.1 开启原生图像编辑；编辑图在 1080×1920 边界内时按 8 像素向下对齐，任一边超出时等比缩至该边界并让宽高各自按 8 像素对齐。普通小图不放大；缩放、对齐或极端比例使任一边不足 16 像素时会提升到 16，以满足 `PromptStage` 的最小尺寸。遮罩同步缩放。Qwen 原生编码器随后按 32 像素步幅处理参考 latent；最终图像的遮罩黑区逐像素保留原图。其它模型忽略编辑图片与遮罩。
 
 提示词界面继续通过 `/prompt-manager/v1` 工作，并沿用 ComfyUI 用户目录下的 `prompt-manager` 资料。已有提示词资料无需迁移。
 
-## 0.5.17 测试版更新
+## 0.5.17 更新
 
 - Krea2 参考风格增加有容量上限的 CPU 内存缓存，并记录封面读取、参考编码、RF cache 与采样耗时。
 - 画面算法与默认强度保持不变；新的条件组合仍需构建 RF cache。
-- 测试版位于 GitHub 分支 [`codex/krea2-reference-speed-0.5.17`](https://github.com/lefango/ComfyUI-ChuangJie/tree/codex/krea2-reference-speed-0.5.17)，未发布到 Comfy Registry。
+- 本版本源码与成品同步至 GitHub `main`；Comfy Registry 和 ComfyUI Manager 会在发布流程与目录索引完成后提供此版本。若暂未显示，可先用上方 ZIP 安装。
 
 ## 0.5.16 更新
 
@@ -107,7 +107,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [测试成品：ComfyUI-ChuangJie-0.5.17.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/codex/krea2-reference-speed-0.5.17/releases/ComfyUI-ChuangJie-0.5.17.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
+| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.5.17.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.17.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。不需要看代码。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
@@ -129,7 +129,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 ```
 
-通过 Git 安装后，在 Manager 点击更新；或在插件文件夹中执行 `git pull`。本插件已经发布到 Comfy Registry。目录同步可能需要一点时间；如果暂时搜不到，请稍后刷新 Manager，或先用上方成品 ZIP。
+通过 Git 安装后，在 Manager 点击更新；或在插件文件夹中执行 `git pull`。本插件通过 Comfy Registry 发布；新版本在发布流程与目录索引完成后显示。如果暂时搜不到，请稍后刷新 Manager，或先用上方成品 ZIP。
 
 ## 插件做什么
 
@@ -146,7 +146,7 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Ready-to-install test build:** Download [ComfyUI-ChuangJie-0.5.17.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/codex/krea2-reference-speed-0.5.17/releases/ComfyUI-ChuangJie-0.5.17.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
+- **Ready-to-install build:** Download [ComfyUI-ChuangJie-0.5.17.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.17.zip). Extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, then restart ComfyUI. No coding required.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install

@@ -105,9 +105,9 @@
     },
     {
       "path": "README.md",
-      "sha256": "fed64675f30631e228586406b84311bef666f9a9f4d998448e1bbdf1ab7072c7",
+      "sha256": "6ea720d97fa8ff099c8692ed26081262ee8e8f9fec5933bbc731ec5ced1ac3be",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "fed64675f30631e228586406b84311bef666f9a9f4d998448e1bbdf1ab7072c7",
+      "source_sha256": "6ea720d97fa8ff099c8692ed26081262ee8e8f9fec5933bbc731ec5ced1ac3be",
       "transform": "copy"
     },
     {
