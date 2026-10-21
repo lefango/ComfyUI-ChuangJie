@@ -1,11 +1,11 @@
 {
   "name": "ComfyUI-ChuangJie",
-  "version": "0.5.20",
+  "version": "0.5.21",
   "modules": [
     {
       "id": "visual_save",
-      "version": "0.1.0",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image",
+      "version": "0.1.1",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image",
       "python": [
         "api.py",
         "nodes.py",
@@ -18,9 +18,9 @@
     },
     {
       "id": "unified",
-      "version": "0.2.20",
+      "version": "0.2.21",
       "version_file": "core.py",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console",
       "python": [
         "core.py",
         "runtime.py",
@@ -98,16 +98,16 @@
   "files": [
     {
       "path": "__init__.py",
-      "sha256": "22d122e8bf7ff8b35dbcfea4d142e69c8113d8da2f1ec2fbe185d962e937732f",
+      "sha256": "320f42ad03caffb5e0a638933d04eeeb4322af1f51398abe266cd6407bfd4cad",
       "source": "主插件/源码/runtime/__init__.py",
-      "source_sha256": "22d122e8bf7ff8b35dbcfea4d142e69c8113d8da2f1ec2fbe185d962e937732f",
+      "source_sha256": "320f42ad03caffb5e0a638933d04eeeb4322af1f51398abe266cd6407bfd4cad",
       "transform": "copy"
     },
     {
       "path": "README.md",
-      "sha256": "a8b6bed756022d83c9f25be749cc24041185223c695a43e8b8985be65036addf",
+      "sha256": "731b3860992dc5f640b6f4644aa1622c05cf30500d01952446718de469476944",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "a8b6bed756022d83c9f25be749cc24041185223c695a43e8b8985be65036addf",
+      "source_sha256": "731b3860992dc5f640b6f4644aa1622c05cf30500d01952446718de469476944",
       "transform": "copy"
     },
     {
@@ -141,35 +141,35 @@
     {
       "path": "modules/visual_save/api.py",
       "sha256": "22ad3368719553a1de3b801f42974fd4238d13c9245833ac6a543ad0ed7391e2",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/api.py",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image/api.py",
       "source_sha256": "22ad3368719553a1de3b801f42974fd4238d13c9245833ac6a543ad0ed7391e2",
       "transform": "copy"
     },
     {
       "path": "modules/visual_save/nodes.py",
       "sha256": "4fee14a6c9a7c5687c61c2e60952c3ba6b9acb8781653541ebf77d3411424cd9",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/nodes.py",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image/nodes.py",
       "source_sha256": "4fee14a6c9a7c5687c61c2e60952c3ba6b9acb8781653541ebf77d3411424cd9",
       "transform": "copy"
     },
     {
       "path": "modules/visual_save/paths.py",
       "sha256": "2477be6867abb24d3e9f418cb5a288434e20d4afe7a0501c2270c93d86acb1a8",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/paths.py",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image/paths.py",
       "source_sha256": "2477be6867abb24d3e9f418cb5a288434e20d4afe7a0501c2270c93d86acb1a8",
       "transform": "copy"
     },
     {
       "path": "web/visual_save.js",
       "sha256": "f8570b225bc1030395cac2d0ad5bd9d76ed02ebcefd1fdf97ca8f3cbd914309c",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/web/main.js",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image/web/main.js",
       "source_sha256": "b7eaea4b87d1cb747f6cfcc2891c1aef3082e2fd62c96a241d557f13b115b916",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
       "path": "web/visual_save/style.css",
       "sha256": "205c3ecbc06e9a11e462a8db2bf9f1bc05c491150ec6c627cc349769bdca8d33",
-      "source": "模块节点/保存图片节点开发/源码/ComfyUI-Visual-Save-Image/web/style.css",
+      "source": "模块节点/创界保存图像节点开发/源码/ComfyUI-ChuangJie-Visual-Save-Image/web/style.css",
       "source_sha256": "205c3ecbc06e9a11e462a8db2bf9f1bc05c491150ec6c627cc349769bdca8d33",
       "transform": "copy"
     },
@@ -182,449 +182,449 @@
     },
     {
       "path": "modules/unified/core.py",
-      "sha256": "2926fb8c7d3380f73864900418fcb1b0afe016db590e6079d416de8a37342455",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/core.py",
-      "source_sha256": "2926fb8c7d3380f73864900418fcb1b0afe016db590e6079d416de8a37342455",
+      "sha256": "96abf77a25ea12ba70bebc418cd753d429238e5f030e1b4d9a7a43154e49bb87",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/core.py",
+      "source_sha256": "96abf77a25ea12ba70bebc418cd753d429238e5f030e1b4d9a7a43154e49bb87",
       "transform": "copy"
     },
     {
       "path": "modules/unified/runtime.py",
       "sha256": "f55db381f672369faa0b0e4098d048c4b5e16701bca73ef87a34dbf23b9a25b8",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/runtime.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/runtime.py",
       "source_sha256": "f55db381f672369faa0b0e4098d048c4b5e16701bca73ef87a34dbf23b9a25b8",
       "transform": "copy"
     },
     {
       "path": "modules/unified/api.py",
       "sha256": "57f6213343b0fb7586ada86f09e869bae2b2be1d7460ad9a9a3369a3d9d2d634",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/api.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/api.py",
       "source_sha256": "57f6213343b0fb7586ada86f09e869bae2b2be1d7460ad9a9a3369a3d9d2d634",
       "transform": "copy"
     },
     {
       "path": "modules/unified/image_edit.py",
       "sha256": "dc0d35c3ae926854f74742943448403933758a9ce5f3d890ae059f362f57413e",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/image_edit.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/image_edit.py",
       "source_sha256": "dc0d35c3ae926854f74742943448403933758a9ce5f3d890ae059f362f57413e",
       "transform": "copy"
     },
     {
       "path": "modules/unified/LICENSE",
       "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/LICENSE",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/LICENSE",
       "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "transform": "copy"
     },
     {
       "path": "modules/unified/THIRD_PARTY_NOTICES.md",
       "sha256": "79dc3cd333cb0d0344abb9b02467b361d3d85c402503fbb603d52ca10c6f7cc9",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/THIRD_PARTY_NOTICES.md",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/THIRD_PARTY_NOTICES.md",
       "source_sha256": "79dc3cd333cb0d0344abb9b02467b361d3d85c402503fbb603d52ca10c6f7cc9",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/__init__.py",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/__init__.py",
       "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/api.py",
       "sha256": "e5a72c3dd0df8f395ecb4c7cddb919e0604104d1b4652d98b5d5c8f452c6a0c9",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/api.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/api.py",
       "source_sha256": "e5a72c3dd0df8f395ecb4c7cddb919e0604104d1b4652d98b5d5c8f452c6a0c9",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/catalog.py",
       "sha256": "e19a42bbef1898c75b3014d0e44749d80544ea62f06a9f1e57a1e298997cab7f",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/catalog.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/catalog.py",
       "source_sha256": "e19a42bbef1898c75b3014d0e44749d80544ea62f06a9f1e57a1e298997cab7f",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/core.py",
       "sha256": "c0eb199e5a27b3792c7f323cc2404989e4cbadc5d0731ef947595a1b4948a49f",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/core.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/core.py",
       "source_sha256": "c0eb199e5a27b3792c7f323cc2404989e4cbadc5d0731ef947595a1b4948a49f",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/covers.py",
       "sha256": "7f5f4f9f6ad727acb81ceee651ade031f66bc21bdfab14bff400ac8e51bbbe4f",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/covers.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/covers.py",
       "source_sha256": "7f5f4f9f6ad727acb81ceee651ade031f66bc21bdfab14bff400ac8e51bbbe4f",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/nodes.py",
       "sha256": "20b295921f79889d0b5f3d7a3d66b1896613bbad55133e6335ceb88115baece2",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/nodes.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/nodes.py",
       "source_sha256": "20b295921f79889d0b5f3d7a3d66b1896613bbad55133e6335ceb88115baece2",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/service.py",
       "sha256": "369ac25dd31727f7025276c85c19913f5552dd7de57ceef775201f0255734428",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/service.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/service.py",
       "source_sha256": "369ac25dd31727f7025276c85c19913f5552dd7de57ceef775201f0255734428",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/storage.py",
       "sha256": "e45b6118e47078d1536ea47861a314e25bc6a1e9de3d012a5c282fe6268508ea",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/storage.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/storage.py",
       "source_sha256": "e45b6118e47078d1536ea47861a314e25bc6a1e9de3d012a5c282fe6268508ea",
       "transform": "copy"
     },
     {
       "path": "modules/unified/lora/version.py",
       "sha256": "55d8ba39f7c3468acf41e5a3bd7a3630f6e2765ec2370a2bc6fce24fbf1b8e5d",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/lora/version.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/lora/version.py",
       "source_sha256": "55d8ba39f7c3468acf41e5a3bd7a3630f6e2765ec2370a2bc6fce24fbf1b8e5d",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/__init__.py",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/__init__.py",
       "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/api.py",
       "sha256": "328d66f23a3e8252e73990b2d77cda16fce41fc954b78bb52b20ba12a63bcc1e",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/api.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/api.py",
       "source_sha256": "328d66f23a3e8252e73990b2d77cda16fce41fc954b78bb52b20ba12a63bcc1e",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/catalog.py",
       "sha256": "dea46dd21060f6da444e5ebe61999e1b491e93172f23bb02a73b9cd8fe3e282a",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/catalog.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/catalog.py",
       "source_sha256": "dea46dd21060f6da444e5ebe61999e1b491e93172f23bb02a73b9cd8fe3e282a",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/core.py",
       "sha256": "f7f6005594fa2df439992aa969b191fb81f01d6af2c6719f8e8e513f0364a432",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/core.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/core.py",
       "source_sha256": "f7f6005594fa2df439992aa969b191fb81f01d6af2c6719f8e8e513f0364a432",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/runtime.py",
       "sha256": "605448a42e5e366930b0507f1aa8e39e2b6461ff0fdfbbdbe61ae92b09f6366a",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/runtime.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/runtime.py",
       "source_sha256": "605448a42e5e366930b0507f1aa8e39e2b6461ff0fdfbbdbe61ae92b09f6366a",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/storage.py",
       "sha256": "32d747bb9da52b2c8289a4075f9614489047c904956be2966c0e5c75f3044b13",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/storage.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/storage.py",
       "source_sha256": "32d747bb9da52b2c8289a4075f9614489047c904956be2966c0e5c75f3044b13",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/__init__.py",
       "sha256": "bd7ab1bcb6478e657aeab974877c36a07719bff57d972ea5385eaed6e3cd34d6",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/__init__.py",
       "source_sha256": "bd7ab1bcb6478e657aeab974877c36a07719bff57d972ea5385eaed6e3cd34d6",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/LICENSE",
       "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/LICENSE",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/LICENSE",
       "source_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/__init__.py",
       "sha256": "e23b824e4c232d87b1cdd0babae3acb41b0c5cb9d6c3013c4ee7f586d1eef6e7",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/__init__.py",
       "source_sha256": "e23b824e4c232d87b1cdd0babae3acb41b0c5cb9d6c3013c4ee7f586d1eef6e7",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/dequant.py",
       "sha256": "215369438d96c372c09eb8701eec3c3b0348084c96dd3ea83872601ebed42017",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/dequant.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/dequant.py",
       "source_sha256": "215369438d96c372c09eb8701eec3c3b0348084c96dd3ea83872601ebed42017",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/loader.py",
       "sha256": "ffff39d209ce22654e67378b80c6a3ca3d349cf8f00ec267085bd16e194730c2",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/loader.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/loader.py",
       "source_sha256": "ffff39d209ce22654e67378b80c6a3ca3d349cf8f00ec267085bd16e194730c2",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/nodes.py",
       "sha256": "a61420fdf3f9fc53214c61b2f0213db2b4968bc03bcc0924ae47885d4fa8c0c0",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/nodes.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/nodes.py",
       "source_sha256": "a61420fdf3f9fc53214c61b2f0213db2b4968bc03bcc0924ae47885d4fa8c0c0",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/gguf_core/ops.py",
       "sha256": "b927e24a7b00c181e9511900fb5afde45464793cf460e1d39a5e736ba093ce64",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/gguf_core/ops.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/gguf_core/ops.py",
       "source_sha256": "b927e24a7b00c181e9511900fb5afde45464793cf460e1d39a5e736ba093ce64",
       "transform": "copy"
     },
     {
       "path": "modules/unified/model/vendor/upstream.json",
       "sha256": "923401e42c3229af2866a3e1e389c471d70ae865295dd3c7f71b2e6a5e50c382",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/model/vendor/upstream.json",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/model/vendor/upstream.json",
       "source_sha256": "923401e42c3229af2866a3e1e389c471d70ae865295dd3c7f71b2e6a5e50c382",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/__init__.py",
       "sha256": "e59e75ee08414f365975bbd6644ba8cd398c29bd110a1233c5b3eb523db3b87d",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/__init__.py",
       "source_sha256": "e59e75ee08414f365975bbd6644ba8cd398c29bd110a1233c5b3eb523db3b87d",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/api.py",
-      "sha256": "6b07ce72c05f307a16991ed7e4a4284a3b9d444a49b32d8f5ee4417e26be69cc",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/api.py",
-      "source_sha256": "6b07ce72c05f307a16991ed7e4a4284a3b9d444a49b32d8f5ee4417e26be69cc",
+      "sha256": "e8470de7eb41213a328433d0562b768f9729a32ba9e8cc028080024a8e79db4d",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/api.py",
+      "source_sha256": "e8470de7eb41213a328433d0562b768f9729a32ba9e8cc028080024a8e79db4d",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/core.py",
-      "sha256": "739144b9e95fd43eea081cfcc07edb9c0a4e9191e2a3aff4379732cf7e95de63",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/core.py",
-      "source_sha256": "739144b9e95fd43eea081cfcc07edb9c0a4e9191e2a3aff4379732cf7e95de63",
+      "sha256": "6ceb5b68eeda544a3f25f88f56dcfd1bcbd5a3d2ce359277d21cd40b9d99b14d",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/core.py",
+      "source_sha256": "6ceb5b68eeda544a3f25f88f56dcfd1bcbd5a3d2ce359277d21cd40b9d99b14d",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/nodes.py",
-      "sha256": "77636306f9f03a49bd84b994a95c6fbb7eeb9e18beadb0427c9206c30bdcbe85",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/nodes.py",
-      "source_sha256": "77636306f9f03a49bd84b994a95c6fbb7eeb9e18beadb0427c9206c30bdcbe85",
+      "sha256": "0d6d6afa29f074d5f430467d3e3b8df9ebcbb1c2f230d1c99c4414dc0062ec55",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/nodes.py",
+      "source_sha256": "0d6d6afa29f074d5f430467d3e3b8df9ebcbb1c2f230d1c99c4414dc0062ec55",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/storage.py",
       "sha256": "d196c9b4e739c1e01112f2bb6b20aaa9e5edb5eaa77bb6004ce13eacbf23fbaf",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/storage.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/storage.py",
       "source_sha256": "d196c9b4e739c1e01112f2bb6b20aaa9e5edb5eaa77bb6004ce13eacbf23fbaf",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/styles.py",
-      "sha256": "0cd2b54ebd563b81adbe771657edb1b171114af621c1bb324cacd32da7b7b41a",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/styles.py",
-      "source_sha256": "0cd2b54ebd563b81adbe771657edb1b171114af621c1bb324cacd32da7b7b41a",
+      "sha256": "d476af2e804cdc8accb0ebf555739e4fc21e9bdf5585ea0afbdb87511affb1b3",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/styles.py",
+      "source_sha256": "d476af2e804cdc8accb0ebf555739e4fc21e9bdf5585ea0afbdb87511affb1b3",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/vendor/__init__.py",
       "sha256": "2d816a1f21ec0cc80bf0def2203d634d915b3f62bde461fba406dfab2c304d08",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/__init__.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/vendor/__init__.py",
       "source_sha256": "2d816a1f21ec0cc80bf0def2203d634d915b3f62bde461fba406dfab2c304d08",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/vendor/krea2_style_transfer.py",
       "sha256": "4b402d1b659cb7d3a3ed04cc9011ae2a080f9f451b81230464b1db95c3d5c6ce",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/krea2_style_transfer.py",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/vendor/krea2_style_transfer.py",
       "source_sha256": "4b402d1b659cb7d3a3ed04cc9011ae2a080f9f451b81230464b1db95c3d5c6ce",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/vendor/KREA2-STYLE-TRANSFER-LICENSE.txt",
       "sha256": "87ff5848dd2a38dbf7e3f7a61fafa0dd4a718e5dcaef8e8ff11dd9520a2464de",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/KREA2-STYLE-TRANSFER-LICENSE.txt",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/vendor/KREA2-STYLE-TRANSFER-LICENSE.txt",
       "source_sha256": "87ff5848dd2a38dbf7e3f7a61fafa0dd4a718e5dcaef8e8ff11dd9520a2464de",
       "transform": "copy"
     },
     {
       "path": "modules/unified/prompt/vendor/NOTICE.md",
       "sha256": "95538fa0084648483f4a4c024e26b373d99058db96bb01114f021b1aca4563a3",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/NOTICE.md",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/prompt/vendor/NOTICE.md",
       "source_sha256": "95538fa0084648483f4a4c024e26b373d99058db96bb01114f021b1aca4563a3",
       "transform": "copy"
     },
     {
       "path": "requirements.txt",
       "sha256": "ebc9c91d6bd968b18a7cdb5eeb09f81120546144607352697403ceafedfe5723",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/requirements.txt",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/requirements.txt",
       "source_sha256": "ebc9c91d6bd968b18a7cdb5eeb09f81120546144607352697403ceafedfe5723",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/lora/manager.css",
+      "path": "web/unified-v0.2.21/lora/manager.css",
       "sha256": "fb269c6920f5f9eca5f5006f69a053b81e14f14ba524bc4dc82c64a2f032970d",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/lora/manager.css",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/lora/manager.css",
       "source_sha256": "fb269c6920f5f9eca5f5006f69a053b81e14f14ba524bc4dc82c64a2f032970d",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/lora/manager.mjs",
+      "path": "web/unified-v0.2.21/lora/manager.mjs",
       "sha256": "c2172963e2dcd50c54a5eb3adc57c2d08d52d2159929fd91f2e6702e46122f02",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/lora/manager.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/lora/manager.js",
       "source_sha256": "531582fcdc5b8b5bdc2799420beeb3bac6c693a716d976493cbd657ce3d72c8f",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/lora/state.mjs",
+      "path": "web/unified-v0.2.21/lora/state.mjs",
       "sha256": "1d003cf47b3040548386e6eb6b49a5fc2963db62227fefa7a146f8bba1466414",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/lora/state.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/lora/state.js",
       "source_sha256": "1d003cf47b3040548386e6eb6b49a5fc2963db62227fefa7a146f8bba1466414",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/lora/tree.mjs",
+      "path": "web/unified-v0.2.21/lora/tree.mjs",
       "sha256": "f6e3ce26ee9413c78774fbda21980233f40e220524428b3334a77e88f40db4b7",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/lora/tree.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/lora/tree.js",
       "source_sha256": "f6e3ce26ee9413c78774fbda21980233f40e220524428b3334a77e88f40db4b7",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20.js",
-      "sha256": "90e7c214583500e6d3bf3c360eb944dbba3f04ab4c9203766371e97401c00676",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/main.js",
-      "source_sha256": "9ae95940ada0afe0eaef55a3f66ab09811643b3d1265b7dd819bc0eaa22215b1",
+      "path": "web/unified-v0.2.21.js",
+      "sha256": "28460b583f0069d532d6afa47f6f6f2ead58f46a0c79d986109e51fbef3dd30b",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/main.js",
+      "source_sha256": "51daffc75fe92463d28837f775e721af0736bfaeb7655252280c75e259fe4dcb",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/collection-console-adapter.mjs",
+      "path": "web/unified-v0.2.21/collection-console-adapter.mjs",
       "sha256": "9ba35315efc7184deaa17b7cf1d4822390d7dde3a1e046eea37e1415ecb51f46",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/collection-console-adapter.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/collection-console-adapter.js",
       "source_sha256": "9ba35315efc7184deaa17b7cf1d4822390d7dde3a1e046eea37e1415ecb51f46",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/preview-events.mjs",
+      "path": "web/unified-v0.2.21/preview-events.mjs",
       "sha256": "846d08ae534b59702e9d379088f8832abd3cdd4c3dd35a92a80c1c4a6f9a1833",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/preview-events.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/preview-events.js",
       "source_sha256": "846d08ae534b59702e9d379088f8832abd3cdd4c3dd35a92a80c1c4a6f9a1833",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/collection-console/collection-console.mjs",
-      "sha256": "5c5e9079cbe4f85284b04e7a09a37311fdde5bd0466d2e5ed7cc82471c703baf",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/collection-console/collection-console.js",
-      "source_sha256": "32524b7aab860eb4b25cb0bfc4cee49f6a245a4e4caa724c5fd41f1b86350774",
+      "path": "web/unified-v0.2.21/collection-console/collection-console.mjs",
+      "sha256": "d4dffe79bf92085bf6e23b8fcdaa576844034a5e771f6ebc2c95b371c30fd988",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/collection-console/collection-console.js",
+      "source_sha256": "3d6094dbf9faae20a0fd17de2229ae5c8353499589b368562b652adc906883ba",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/collection-console/collection-console.css",
+      "path": "web/unified-v0.2.21/collection-console/collection-console.css",
       "sha256": "22549a49bb6d534e59ff63dc9aed0bf5c6f0be85bb39f7d694edc84f8790fa82",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/collection-console/collection-console.css",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/collection-console/collection-console.css",
       "source_sha256": "22549a49bb6d534e59ff63dc9aed0bf5c6f0be85bb39f7d694edc84f8790fa82",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/collection-console/state.mjs",
+      "path": "web/unified-v0.2.21/collection-console/state.mjs",
       "sha256": "578b1d52e6ff0102701960ea2c463d799e3c5cc818ed9ad0bc35be31945fe885",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/collection-console/state.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/collection-console/state.js",
       "source_sha256": "578b1d52e6ff0102701960ea2c463d799e3c5cc818ed9ad0bc35be31945fe885",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/collection-console/assets/ink-mountains.webp",
+      "path": "web/unified-v0.2.21/collection-console/assets/ink-mountains.webp",
       "sha256": "d393af438409751069429847109f78747f5ab2953d2d77853280ae2444496ec1",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/collection-console/assets/ink-mountains.webp",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/collection-console/assets/ink-mountains.webp",
       "source_sha256": "d393af438409751069429847109f78747f5ab2953d2d77853280ae2444496ec1",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/manager.mjs",
+      "path": "web/unified-v0.2.21/manager.mjs",
       "sha256": "1c4075f0b99bc5ece3230b3f582259dabbfe8c5d299c5213ec3cea7e6b90df0e",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/manager.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/manager.js",
       "source_sha256": "efc7904aa6cfaa556d82665c6f9462dcc0577e07f3234ac967cc1ce8001b5537",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/state.mjs",
-      "sha256": "536d97b29fc30bc9700eb8d215397a445f986d88043aabd58c852c41579482b5",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/state.js",
-      "source_sha256": "536d97b29fc30bc9700eb8d215397a445f986d88043aabd58c852c41579482b5",
+      "path": "web/unified-v0.2.21/state.mjs",
+      "sha256": "01b756d6b95df695c400c12a8c41b96983545ebf100f627bb0ed062c51160ed1",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/state.js",
+      "source_sha256": "01b756d6b95df695c400c12a8c41b96983545ebf100f627bb0ed062c51160ed1",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/style.css",
+      "path": "web/unified-v0.2.21/style.css",
       "sha256": "fa16505fcec99f17c63c568955894da20819fa6bd33d23a5b59af92336cc0903",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/style.css",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/style.css",
       "source_sha256": "fa16505fcec99f17c63c568955894da20819fa6bd33d23a5b59af92336cc0903",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/sampler-seed.mjs",
+      "path": "web/unified-v0.2.21/sampler-seed.mjs",
       "sha256": "b2d3d314e39919fa595483deb1731793daaf0e3a0b841281f3483e927e391221",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/sampler-seed.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/sampler-seed.js",
       "source_sha256": "b2d3d314e39919fa595483deb1731793daaf0e3a0b841281f3483e927e391221",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/image-editor.mjs",
+      "path": "web/unified-v0.2.21/image-editor.mjs",
       "sha256": "d2cc52a350629658968ecd15e488284282f189f2764c19fa841d30991f0e4960",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/image-editor.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/image-editor.js",
       "source_sha256": "d2cc52a350629658968ecd15e488284282f189f2764c19fa841d30991f0e4960",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/image-editor.css",
+      "path": "web/unified-v0.2.21/image-editor.css",
       "sha256": "021c0a24cf9ad7ae2e4270d716d1ef9359c9cf0c0e6269a7d1746ebc1c3d0848",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/image-editor.css",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/image-editor.css",
       "source_sha256": "021c0a24cf9ad7ae2e4270d716d1ef9359c9cf0c0e6269a7d1746ebc1c3d0848",
       "transform": "copy"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/index.mjs",
+      "path": "web/unified-v0.2.21/prompt/index.mjs",
       "sha256": "f885cefad2fc75c2b70f503e6f74be3cdd5e09ffc38e7a12c10a0a202cbbef2a",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/index.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/index.js",
       "source_sha256": "455a826d63255c381fc207c259202134607f4158b9cef14f6e63a1377b6a674b",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/node.mjs",
+      "path": "web/unified-v0.2.21/prompt/node.mjs",
       "sha256": "97e5b435207c18abb174a19bba11f31127f35d02a2bd87e662b88786461b1e90",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/node.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/node.js",
       "source_sha256": "1ef1183f74649c828e988bd575171ccd2f25fe8fdb9dd3f467063c276fe74ad5",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/state.mjs",
+      "path": "web/unified-v0.2.21/prompt/state.mjs",
       "sha256": "4d043436a297f97829d827b45ed94cd844896dea82392238075ba17415fb4722",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/state.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/state.js",
       "source_sha256": "4d043436a297f97829d827b45ed94cd844896dea82392238075ba17415fb4722",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/ui.mjs",
+      "path": "web/unified-v0.2.21/prompt/ui.mjs",
       "sha256": "e21cb395c2ce7cd798cfa7f7d00959bdf8cabeb8a71b60b5cb4455377ba21830",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/ui.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/ui.js",
       "source_sha256": "9b3f0259d439116e0b51fd0a15b1d676f3e66a574f81acc8ef14303f0b167475",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/styles.mjs",
-      "sha256": "dc1b326464a5dd3451acf8f760166b541a92632064c87525a21f577165023fce",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/styles.js",
-      "source_sha256": "a548d7714e58276215b24f5b0c69b36ae112e2a5feefc46d11641dd97ba231aa",
+      "path": "web/unified-v0.2.21/prompt/styles.mjs",
+      "sha256": "ee8750af1bf9acfe647cd114980be83f937f4b9aa0ff0d266cf8f664cde0ae54",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/styles.js",
+      "source_sha256": "64f672e0e79234c5d99757a3852ac2eb071264266597a9b8746ad875184cd784",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/resolution.mjs",
+      "path": "web/unified-v0.2.21/prompt/resolution.mjs",
       "sha256": "84108882e15c362bce8f1e0ac77df1b6251038143e3123a3b411674d4b5a11cb",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/resolution.js",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/resolution.js",
       "source_sha256": "f000ac2a477de9ff7a6394d31de25f14413d9fd73d5ac72bc7f1ed53c9f64747",
       "transform": "helpers .js -> .mjs; relocate entry asset imports"
     },
     {
-      "path": "web/unified-v0.2.20/prompt/style.css",
+      "path": "web/unified-v0.2.21/prompt/style.css",
       "sha256": "8a848db180de8241b38a116e62e5cdcdf6d7a4c0c2b89c7cc49054d7f8b2e6ad",
-      "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/web/prompt/style.css",
+      "source": "模块节点/创界集成控制台节点开发/源码/ComfyUI-ChuangJie-Integrated-Console/web/prompt/style.css",
       "source_sha256": "8a848db180de8241b38a116e62e5cdcdf6d7a4c0c2b89c7cc49054d7f8b2e6ad",
       "transform": "copy"
     }

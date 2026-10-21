@@ -23,7 +23,7 @@ export function parseState(raw) {
     if (Boolean(g.edit_image_id)!==Boolean(g.edit_image_width&&g.edit_image_height)) throw Error("待编辑图片及尺寸信息不完整");
     return s;
 }
-export const outputs = s => [...Object.keys(TYPES).filter(k=>s.modules[k].source!=="off").map(k=>({id:k,type:TYPES[k],label:LABELS[k]})),{id:"image",type:"IMAGE",label:"图像"},{id:"positive_conditioning",type:"CONDITIONING",label:"正面条件"},{id:"negative_conditioning",type:"CONDITIONING",label:"负面条件"},{id:"latent",type:"LATENT",label:"Latent"}];
+export const outputs = s => [...Object.keys(TYPES).filter(k=>s.modules[k].source!=="off").map(k=>({id:k,type:TYPES[k],label:LABELS[k]})),{id:"image",type:"IMAGE",label:"图像"},{id:"positive_conditioning",type:"CONDITIONING",label:"正面条件"},{id:"negative_conditioning",type:"CONDITIONING",label:"负面条件"},{id:"latent",type:"LATENT",label:"潜空间"}];
 export const inputs = s => Object.keys(TYPES).filter(k=>s.modules[k].source==="external").map(k=>({id:k,type:TYPES[k],label:k==="model"?"外部模型":`外部 ${LABELS[k]}`}));
 export const stableJSON = v => JSON.stringify(v, function(k,value){return value && typeof value==="object" && !Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])):value;});
 export async function digest(s) {

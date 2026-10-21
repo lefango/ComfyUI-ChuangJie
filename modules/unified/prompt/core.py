@@ -4,6 +4,11 @@ import math
 import re
 
 MAX_JSON = 2 * 1024 * 1024
+MAX_STYLE_COVER_BYTES = 70 * 1024 * 1024
+MAX_STYLE_COVER_DATA_URL_CHARS = max(
+    len(f"data:image/{mime};base64,") for mime in ("png", "jpeg", "webp")
+) + 4 * ((MAX_STYLE_COVER_BYTES + 2) // 3)
+MAX_STYLE_SAVE_JSON = 95 * 1024 * 1024
 EMPTY_CONFIG = '{"schema":1,"presets":[]}'
 KREA_STYLE_REFERENCE_DEFAULT = {"low_scale_end": 1.1, "ref_k_strength": 1.1}
 

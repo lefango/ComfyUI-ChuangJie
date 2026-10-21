@@ -5,12 +5,13 @@ import json
 import re
 import uuid
 from pathlib import Path
-from .core import Invalid, Missing, text
+from .core import (Invalid, Missing, MAX_STYLE_COVER_BYTES,
+                   MAX_STYLE_COVER_DATA_URL_CHARS, text)
 
 
 def image_bytes(data):
-    if len(data) > 1024 * 1024:
-        raise Invalid("封面不能超过 1 MB")
+    if len(data) > MAX_STYLE_COVER_BYTES:
+        raise Invalid("封面不能超过 70 MB")
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         return "png"
     if data.startswith(b"\xff\xd8\xff"):
@@ -56,7 +57,10 @@ class Styles:
             old = self.store._get(db, "style", key) if revision > 1 else {}
             body["image"] = old.get("image", "")
             if value.get("cover"):
-                match = re.fullmatch(r"data:image/(?:jpeg|png|webp);base64,([A-Za-z0-9+/=]+)", text(value["cover"], "封面", 1500000))
+                cover = value["cover"]
+                if not isinstance(cover, str) or len(cover) > MAX_STYLE_COVER_DATA_URL_CHARS:
+                    raise Invalid("封面无效或超过 70 MB")
+                match = re.fullmatch(r"data:image/(?:jpeg|png|webp);base64,([A-Za-z0-9+/=]+)", cover)
                 if not match:
                     raise Invalid("无效封面")
                 body["image"] = self.cover(base64.b64decode(match[1], validate=True))

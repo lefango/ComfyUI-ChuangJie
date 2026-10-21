@@ -5,8 +5,9 @@ import io
 import logging
 import re
 import time
-from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT, merge,
-                   merge_selected, config as parse_config)
+from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT,
+                   MAX_STYLE_COVER_BYTES, MAX_STYLE_COVER_DATA_URL_CHARS,
+                   merge, merge_selected, config as parse_config)
 
 LATENT_MAX_RESOLUTION = 16384
 
@@ -204,14 +205,14 @@ class PromptManager:
 
 
 def krea_reference_data_data(value):
-    if not isinstance(value, str) or len(value) > 1_500_000:
-        raise ValueError("主风格封面无效或过大，请重新选择风格")
+    if not isinstance(value, str) or len(value) > MAX_STYLE_COVER_DATA_URL_CHARS:
+        raise ValueError("主风格封面无效或超过 70 MB，请重新选择风格")
     match = re.fullmatch(r"data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)", value)
     if not match:
         raise ValueError("主风格封面尚未载入或格式不支持")
     raw = base64.b64decode(match.group(2), validate=True)
-    if len(raw) > 1_048_576:
-        raise ValueError("主风格封面超过 1 MB")
+    if len(raw) > MAX_STYLE_COVER_BYTES:
+        raise ValueError("主风格封面超过 70 MB")
     return raw
 
 

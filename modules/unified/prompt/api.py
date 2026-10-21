@@ -3,12 +3,17 @@ import json
 import logging
 from pathlib import Path
 from urllib.parse import urlsplit
-from .core import Conflict, Invalid, Missing, MAX_JSON, EMPTY_CONFIG, merge
+from .core import (Conflict, Invalid, Missing, MAX_JSON, MAX_STYLE_SAVE_JSON,
+                   EMPTY_CONFIG, merge)
 from .storage import Store
 from .styles import Styles
 
 PREFIX = "/prompt-manager/v1"
 _stores = {}
+
+
+def operation_body_limit(operation):
+    return MAX_STYLE_SAVE_JSON if operation == "style-save" else MAX_JSON
 
 
 def _prefix_is_registered(routes):
@@ -115,17 +120,18 @@ def register_routes(routes, get_store):
     async def operation(request):
         if request.content_type != "application/json":
             raise Invalid("需要 application/json")
+        op = request.match_info["operation"]
+        max_size = operation_body_limit(op)
         chunks, size = [], 0
         async for chunk in request.content.iter_chunked(65536):
             size += len(chunk)
-            if size > MAX_JSON:
-                raise web.HTTPRequestEntityTooLarge(max_size=MAX_JSON, actual_size=size)
+            if size > max_size:
+                raise web.HTTPRequestEntityTooLarge(max_size=max_size, actual_size=size)
             chunks.append(chunk)
         body = json.loads(b"".join(chunks))
         if not isinstance(body, dict):
             raise Invalid("请求体必须是 JSON 对象")
         store = get_store(request)
-        op = request.match_info["operation"]
         if op == "style-save":
             result = await asyncio.to_thread(Styles(store).save, body)
         elif op == "style-delete":

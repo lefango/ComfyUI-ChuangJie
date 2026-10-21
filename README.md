@@ -2,7 +2,14 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前最新版本为 **0.5.20**，集成集合控制台 **0.2.20** 和可视化保存图像 **0.1.0**。本版修复风格参考图库空间和新建/编辑弹窗，GitHub `main` 已同步；Classic、Nodes 2.0 和工作流实测待用户完成。Comfy Registry 发布由 GitHub 主分支工作流处理。提示词管理界面与 API 已由集合控制台内置；主插件不再注册独立 `PromptManager` 节点。
+当前版本为 **0.5.21**，集成创界集成控制台 **0.2.21** 和创界保存图像 **0.1.1**。提示词管理界面与 API 已由创界集成控制台内置；主插件不再注册独立 `PromptManager` 节点。
+
+## 0.5.21 更新
+
+- 两个节点显示名为“创界保存图像”和“创界集成控制台”；输出端口 `latent` 的界面标签为“潜空间”，内部名称、类型与连接保持兼容。
+- 集成控制台封面上限为 70 MB。
+- 独立模块 ZIP 使用 `ComfyUI-ChuangJie-Visual-Save-Image` 和 `ComfyUI-ChuangJie-Integrated-Console` 安装目录。由独立旧版升级时，先移除旧目录，避免重复节点；主插件安装目录仍为 `ComfyUI-ChuangJie`。
+- 隔离实例已检查 Classic 与 Nodes 2.0 下新建节点及页面重载恢复；Nodes 2.0 重载后仍显示“潜空间”。JSON 文件导出/重开、旧连线工作流和实际 GPU 生成尚未实测。
 
 集合控制台仅对 Qwen Image 2.1 开启原生图像编辑；编辑图在 1080×1920 边界内时按 8 像素向下对齐，任一边超出时等比缩至该边界并让宽高各自按 8 像素对齐。普通小图不放大；缩放、对齐或极端比例使任一边不足 16 像素时会提升到 16，以满足 `PromptStage` 的最小尺寸。遮罩同步缩放。Qwen 原生编码器随后按 32 像素步幅处理参考 latent；最终图像的遮罩黑区逐像素保留原图。其它模型忽略编辑图片与遮罩。
 
@@ -102,9 +109,9 @@ The prompt node adds separate positive and negative text outputs for downstream 
 
 ## 界面预览 | Interface preview
 
-以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前本地 0.5.20 将模型、LoRA 与提示词管理整合在集合控制台中；截图仅供历史参考。
+以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前本地 0.5.21 将模型、LoRA 与提示词管理整合在创界集成控制台中；截图仅供历史参考。
 
-The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Current local build 0.5.20 integrates model, LoRA and prompt management in the collection console; treat these screenshots as historical references.
+The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Current local build 0.5.21 integrates model, LoRA and prompt management in the ChuangJie Integrated Console; treat these screenshots as historical references.
 
 **节点入口：在“创界节点”分类下选择管理工具。**
 
@@ -124,14 +131,14 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.5.20.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.20.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。校验值见 `releases/SHA256SUMS.txt`。 |
+| **只想安装使用** | [成品：ComfyUI-ChuangJie-0.5.21.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.21.zip) | 下载 ZIP，解压后放入 `ComfyUI/custom_nodes/`。校验值见 `releases/SHA256SUMS.txt`。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
 
 ## 安装（适合新手）
 
-1. 下载 `ComfyUI-ChuangJie-0.5.20.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
+1. 下载 `ComfyUI-ChuangJie-0.5.21.zip` 安装包，并核对 `releases/SHA256SUMS.txt`。
 2. 先关闭 ComfyUI，再把 ZIP 解压到 `ComfyUI/custom_nodes/`。
 3. 确认最终目录是 `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`，里面能看到 `__init__.py`。
 4. 启动 ComfyUI，并刷新浏览器页面。
@@ -150,10 +157,10 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ## 插件做什么
 
-- **集合控制台**：在“创界节点 / 模型工具”配置模型、LoRA、提示词、风格、分辨率和采样，内置 K 采样与 VAE 解码；LoRA 触发词自动加入正面提示词，节点输出图像。提示词管理界面由集合控制台打开。
-- **可视化保存图像**：在“创界节点 / 图像工具”中选择或新建 ComfyUI `output` 下的文件夹，保存 PNG、浏览结果，并将图像继续传给后续节点。
+- **创界集成控制台**：在“创界节点 / 模型工具”配置模型、LoRA、提示词、风格、分辨率和采样，内置 K 采样与 VAE 解码；LoRA 触发词自动加入正面提示词，节点输出图像。提示词管理界面由此节点打开。
+- **创界保存图像**：在“创界节点 / 图像工具”中选择或新建 ComfyUI `output` 下的文件夹，保存 PNG、浏览结果，并将图像继续传给后续节点。
 
-主插件注册集合控制台相关节点与 `VisualSaveImage`，不再注册独立 `PromptManager`。集合控制台标识、`/cj-unified-loader-test/v1` 和 `unified-model-loader-test` 路径保持兼容；提示词 API 仍使用 `/prompt-manager/v1`，资料仍位于 `prompt-manager`。拆分的 `LoRAManager` 与独立模型加载节点不再注册。升级不会删除任何上述用户资料。
+主插件注册创界集成控制台相关节点与 `VisualSaveImage`，不再注册独立 `PromptManager`。节点标识、`/cj-unified-loader-test/v1` 和 `unified-model-loader-test` 路径保持兼容；提示词 API 仍使用 `/prompt-manager/v1`，资料仍位于 `prompt-manager`。拆分的 `LoRAManager` 与独立模型加载节点不再注册。升级不会删除任何上述用户资料。
 
 ## 卸载或回退
 
@@ -163,12 +170,12 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Ready-to-install build:** Download [ComfyUI-ChuangJie-0.5.20.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.20.zip). Verify `releases/SHA256SUMS.txt`, extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, and restart ComfyUI.
+- **Ready-to-install build:** Download [ComfyUI-ChuangJie-0.5.21.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.21.zip). Verify `releases/SHA256SUMS.txt`, extract it into `ComfyUI/custom_nodes/ComfyUI-ChuangJie/`, and restart ComfyUI.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
 
-1. Download `releases/ComfyUI-ChuangJie-0.5.20.zip` and verify `releases/SHA256SUMS.txt`.
+1. Download `releases/ComfyUI-ChuangJie-0.5.21.zip` and verify `releases/SHA256SUMS.txt`.
 2. Stop ComfyUI and extract the ZIP into `ComfyUI/custom_nodes/`.
 3. Make sure `ComfyUI/custom_nodes/ComfyUI-ChuangJie/__init__.py` exists.
 4. Restart ComfyUI and refresh the browser.
@@ -181,10 +188,10 @@ Search for `ComfyUI-ChuangJie` in Manager and choose Install or Update. If it is
 
 ### What it does
 
-- **Collection console:** Manage models, LoRAs, prompts, styles and sampling under “ChuangJie Nodes / Model Tools.” The prompt management interface opens inside the collection console.
-- **Visual image saving:** Choose or create folders under ComfyUI's `output`, save PNG files, preview results, and pass images through to later nodes.
+- **ChuangJie Integrated Console:** Manage models, LoRAs, prompts, styles and sampling under “ChuangJie Nodes / Model Tools.” The prompt management interface opens inside this node.
+- **ChuangJie Save Image:** Choose or create folders under ComfyUI's `output`, save PNG files, preview results, and pass images through to later nodes.
 
-The standalone `PromptManager` node is no longer registered; replace workflows that use it manually. The collection console identifiers, `/cj-unified-loader-test/v1` route and `unified-model-loader-test` data directory remain compatible. Prompt management keeps `/prompt-manager/v1` and the existing `prompt-manager` data directory. `VisualSaveImage` remains available. Do not install the retired split packages or the standalone ComfyUI-Unified-Model-Loader-Test package alongside this plugin.
+The standalone `PromptManager` node is no longer registered; replace workflows that use it manually. The collection console identifiers, `/cj-unified-loader-test/v1` route and `unified-model-loader-test` data directory remain compatible. Prompt management keeps `/prompt-manager/v1` and the existing `prompt-manager` data directory. `VisualSaveImage` remains available. Do not install standalone save-image or console packages alongside this plugin; remove either legacy folders `ComfyUI-Visual-Save-Image` and `ComfyUI-Unified-Model-Loader-Test`, or renamed folders `ComfyUI-ChuangJie-Visual-Save-Image` and `ComfyUI-ChuangJie-Integrated-Console` from `custom_nodes` before using the combined plugin.
 
 ## License / 许可
 

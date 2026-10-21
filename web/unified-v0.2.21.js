@@ -1,16 +1,16 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.20/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.20/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.20/prompt/index.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.20/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.20/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.20/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.20/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.20/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.21/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.21/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.21/prompt/index.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.21/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.21/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.21/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.21/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.21/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.20/lora/manager.css", "./unified-v0.2.20/style.css", "./unified-v0.2.20/image-editor.css", "./unified-v0.2.20/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.21/lora/manager.css", "./unified-v0.2.21/style.css", "./unified-v0.2.21/image-editor.css", "./unified-v0.2.21/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -18,6 +18,7 @@ const live = new Set();
 let sequence = 0;
 let watchTimer = null;
 const TASK_SUFFIXES = ["model", "clip", "vae", "lora-model", "lora-clip", "triggers", "prompt", "empty-latent", "edit-image", "vae-encode", "vae-encode-inpaint", "ksampler", "vae-decode", "sample-preview", "mask-composite", "final-preview"];
+const MAX_STYLE_COVER_BYTES = 70 * 1024 * 1024;
 const INTERNAL_CLASSES = new Set(["CJUnifiedAssetTest", "CJUnifiedLoRATest", "CJUnifiedTriggersTest", "CJUnifiedPromptStageTest", "CJUnifiedEditImageStageTest", "CJUnifiedMaskCompositeStageTest"]);
 const linkAt = (graph, id) => graph?.links?.get?.(id) || graph?.links?.[id] || graph?._links?.get?.(id) || graph?._links?.[id];
 
@@ -161,7 +162,7 @@ async function prepareQueueData(data) {
         if (family === "krea2" && style?.image) {
             const key = String(style.id) + ":" + String(style.revision) + ":" + String(style.image);
             const cover = await styleCoverRequest(style);
-            if (!(cover instanceof Blob) || cover.size > 1_048_576) throw Error("Krea2 主风格封面无效或超过 1 MB");
+            if (!(cover instanceof Blob) || cover.size > MAX_STYLE_COVER_BYTES) throw Error("Krea2 主风格封面无效或超过 70 MB");
             values.krea_reference_key = key;
             const encodeStarted = performance.now();
             values.krea_reference_data = await blobDataURL(cover);
@@ -683,7 +684,7 @@ app.registerExtension({
         localized(node);
         try { previews.set(node,new Preview(node));watch(); }
         catch(error) {
-            console.error("[ComfyUI-ChuangJie] 集合控制台挂载失败：" + (error?.stack || error?.message || String(error)));
+            console.error("[ComfyUI-ChuangJie] 创界集成控制台挂载失败：" + (error?.stack || error?.message || String(error)));
             throw error;
         }
     },

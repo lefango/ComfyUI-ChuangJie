@@ -262,10 +262,10 @@ export function mountCollectionConsole(container, options = {}) {
   state.favoriteStyleIds = [...favoriteStyles];
 
   const root = createElement("section", "cc-root");
-  root.setAttribute("aria-label", "集合控制台");
+  root.setAttribute("aria-label", "创界集成控制台");
   root.innerHTML = `
     <header class="cc-toolbar">
-      <div class="cc-brand"><span class="cc-brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 22 11 12l4 5 3-4 6 9H4Z"></path><path d="M6 8h16M8 5h12"></path></svg></span><strong>集合控制台</strong></div>
+      <div class="cc-brand"><span class="cc-brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M4 22 11 12l4 5 3-4 6 9H4Z"></path><path d="M6 8h16M8 5h12"></path></svg></span><strong>创界集成控制台</strong></div>
       <nav class="cc-toolbar-actions" aria-label="节点设置">
         <button class="cc-tool-button" type="button" data-action="open-panel" data-panel="resolution"><span>分辨率</span><strong data-summary="resolution">1024 × 1024</strong></button>
         <button class="cc-tool-button cc-tool-primary" type="button" data-action="open-panel" data-panel="model"><span>管理模型</span><strong data-summary="model">Krea 2</strong></button>

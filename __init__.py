@@ -21,12 +21,12 @@ class UnifiedManager(_UnifiedManager):
 NODE_CLASS_MAPPINGS = {"VisualSaveImage": VisualSaveImage,
     MANAGER: UnifiedManager, ASSET: AssetLoader, PATCH: LoRAStage, TRIGGERS: TriggerStage,
     PROMPT_STAGE: PromptStage, EDIT_IMAGE_STAGE: EditImageStage, MASK_COMPOSITE_STAGE: MaskCompositeStage}
-NODE_DISPLAY_NAME_MAPPINGS = {"VisualSaveImage": "可视化保存图像",
-    MANAGER: "集合控制台", ASSET: "一体节点 · 内部加载", PATCH: "一体节点 · 内部 LoRA",
+NODE_DISPLAY_NAME_MAPPINGS = {"VisualSaveImage": "创界保存图像",
+    MANAGER: "创界集成控制台", ASSET: "一体节点 · 内部加载", PATCH: "一体节点 · 内部 LoRA",
     TRIGGERS: "一体节点 · 内部触发词", PROMPT_STAGE: "一体节点 · 内部提示词",
     EDIT_IMAGE_STAGE: "一体节点 · 内部图像编辑", MASK_COMPOSITE_STAGE: "一体节点 · 内部遮罩合成"}
 WEB_DIRECTORY = "./web"
-__version__ = "0.5.20"
+__version__ = "0.5.21"
 
 
 def _register():
@@ -37,7 +37,7 @@ def _register():
         return
     prefixes = ("/lora-manager/v1", "/prompt-manager/v1", "/visual-save-image/v1", "/cj-unified-loader-test/v1")
     if any(getattr(route, "path", "").startswith(prefixes) for route in server.routes):
-        raise RuntimeError("创界：发现旧独立模块路由。请停止 ComfyUI，将 ComfyUI-LoRA-Manager、ComfyUI-Prompt-Manager 、ComfyUI-Visual-Save-Image 和 ComfyUI-Unified-Model-Loader-Test 移出 custom_nodes，再重启。")
+        raise RuntimeError("创界：发现独立节点扩展的重复路由。请停止 ComfyUI，将旧目录 ComfyUI-Visual-Save-Image、ComfyUI-Unified-Model-Loader-Test，或新目录 ComfyUI-ChuangJie-Visual-Save-Image、ComfyUI-ChuangJie-Integrated-Console 移出 custom_nodes，再重启。")
     _register_visual_save()
     import folder_paths
     _register_models(server, folder_paths)
