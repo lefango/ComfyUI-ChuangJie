@@ -1,16 +1,16 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.16/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.16/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.16/prompt/index.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.16/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.16/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.16/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.16/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.16/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.18/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.18/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.18/prompt/index.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.18/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.18/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.18/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.18/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.18/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.16/lora/manager.css", "./unified-v0.2.16/style.css", "./unified-v0.2.16/image-editor.css", "./unified-v0.2.16/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.18/lora/manager.css", "./unified-v0.2.18/style.css", "./unified-v0.2.18/image-editor.css", "./unified-v0.2.18/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -89,6 +89,40 @@ function blobDataURL(blob) {
         reader.readAsDataURL(blob);
     });
 }
+function createStyleCoverCache(request, {maxBytes = 32 * 1024 * 1024, maxEntries = 12, maxAgeMs = 8 * 60000,
+    now = () => Date.now(), log = (event, fields) => console.debug("[风格参考] " + event, fields)} = {}) {
+    const entries = new Map();
+    let bytes = 0;
+    function drop(key) {
+        const entry = entries.get(key);
+        if (!entry) return;
+        entries.delete(key);
+        bytes -= entry.blob.size;
+    }
+    function trim() {
+        while (entries.size && (entries.size > maxEntries || bytes > maxBytes)) drop(entries.keys().next().value);
+    }
+    return async function styleCoverRequest(style) {
+        const key = String(style?.image || "") + "|" + String(style?.revision ?? "");
+        const cached = entries.get(key);
+        if (cached && now() - cached.at <= maxAgeMs) {
+            entries.delete(key); entries.set(key, cached);
+            log("封面缓存命中", {bytes:cached.blob.size});
+            return cached.blob;
+        }
+        if (cached) drop(key);
+        const started = now();
+        const blob = await request("style-cover", style.image);
+        const elapsedMs = now() - started;
+        if (!(blob instanceof Blob)) throw Error("风格封面无效");
+        entries.set(key, {blob, at:now()});
+        bytes += blob.size;
+        trim();
+        log("封面请求", {elapsedMs, bytes:blob.size, cached:entries.has(key)});
+        return blob;
+    };
+}
+const styleCoverRequest = createStyleCoverCache(promptRequest);
 function imageDemanded(output, managerId, state) {
     const index = outputs(state).findIndex(port => port.id === "image");
     if (index < 0) return false;
@@ -126,10 +160,12 @@ async function prepareQueueData(data) {
         const style = selectedStyle(values.prompt_config);
         if (family === "krea2" && style?.image) {
             const key = String(style.id) + ":" + String(style.revision) + ":" + String(style.image);
-            const cover = await promptRequest("style-cover", style.image);
+            const cover = await styleCoverRequest(style);
             if (!(cover instanceof Blob) || cover.size > 1_048_576) throw Error("Krea2 主风格封面无效或超过 1 MB");
             values.krea_reference_key = key;
+            const encodeStarted = performance.now();
             values.krea_reference_data = await blobDataURL(cover);
+            console.debug("[风格参考] 封面 Base64 编码", {elapsedMs:Math.round(performance.now() - encodeStarted), bytes:cover.size});
         }
         const imageId = state.generation.edit_image_id;
         if (imageId && qwenImage21EditCapable(state)) {
@@ -137,9 +173,11 @@ async function prepareQueueData(data) {
             values.edit_image_token = pending.token;
             values.edit_has_mask = Boolean(pending.has_mask);
             if (style?.image) {
-                const cover = await promptRequest("style-cover", style.image);
+                const cover = await styleCoverRequest(style);
                 if (!(cover instanceof Blob) || cover.size > 20 * 1024 * 1024) throw Error("Qwen 风格参考图无效或超过 20 MB");
+                const encodeStarted = performance.now();
                 values.qwen_reference_data = await blobDataURL(cover);
+                console.debug("[风格参考] 封面 Base64 编码", {elapsedMs:Math.round(performance.now() - encodeStarted), bytes:cover.size});
             }
         }
     }
