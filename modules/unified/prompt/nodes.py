@@ -2,7 +2,9 @@ import hashlib
 import json
 import base64
 import io
+import logging
 import re
+import time
 from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT, merge,
                    merge_selected, config as parse_config)
 
@@ -160,20 +162,16 @@ class PromptManager:
             if clip is None:
                 raise ValueError("Krea2 专用模式需要连接 CLIPLoader 类型为 krea2 的 CLIP")
             try:
-                encoded = krea_reference_data_data(krea_reference_data)
-                import numpy as np
-                import torch
-                from PIL import Image
                 from .vendor.krea2_style_transfer import Krea2StyleReference, Krea2StyleTransfer
 
-                with Image.open(io.BytesIO(encoded)) as cover:
-                    cover.load()
-                    if cover.width > 8192 or cover.height > 8192 or cover.width * cover.height > 16_000_000:
-                        raise ValueError("主风格封面尺寸过大")
-                    pixels = np.asarray(cover.convert("RGB"), dtype=np.float32) / 255.0
-                image = torch.from_numpy(pixels).unsqueeze(0)
+                reference_started = time.perf_counter()
+                image = load_reference_image(krea_reference_data)
                 reference_latent, _preview, _debug = Krea2StyleReference().build(
                     vae, latent, image, "crop", "lanczos"
+                )
+                logging.info(
+                    "[Krea2 风格参考] 参考图准备 elapsed_ms=%.1f",
+                    (time.perf_counter() - reference_started) * 1000.0,
                 )
                 ref_conditioning = clip.encode_from_tokens_scheduled(clip.tokenize(positive_text))
                 validate_krea2_conditioning(ref_conditioning)
@@ -215,3 +213,28 @@ def krea_reference_data_data(value):
     if len(raw) > 1_048_576:
         raise ValueError("主风格封面超过 1 MB")
     return raw
+
+
+def load_reference_image(value):
+    """Decode, validate, and log a style cover without exposing its payload."""
+    started = time.perf_counter()
+    encoded = krea_reference_data_data(value)
+    import numpy as np
+    import torch
+    from PIL import Image
+
+    with Image.open(io.BytesIO(encoded)) as cover:
+        cover.load()
+        width, height = int(cover.width), int(cover.height)
+        if width > 8192 or height > 8192 or width * height > 16_000_000:
+            raise ValueError("主风格封面尺寸过大")
+        pixels = np.asarray(cover.convert("RGB"), dtype=np.float32) / 255.0
+    image = torch.from_numpy(pixels).unsqueeze(0)
+    logging.info(
+        "[Krea2 风格参考] 封面解码 elapsed_ms=%.1f bytes=%d size=%dx%d",
+        (time.perf_counter() - started) * 1000.0,
+        len(encoded),
+        width,
+        height,
+    )
+    return image

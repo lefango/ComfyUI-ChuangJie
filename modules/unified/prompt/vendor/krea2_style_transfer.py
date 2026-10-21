@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import logging
 import math
+import threading
+import time
 import types
+import weakref
+from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
@@ -16,6 +22,208 @@ from comfy.ldm.modules.attention import optimized_attention_masked
 
 _CONFIG_KEY = "krea2_style_transfer"
 _CATEGORY = "Krea2 Style Transfer"
+_REFERENCE_LATENT_CACHE_MAX_BYTES = 128 * 1024 * 1024
+_RF_CACHE_MAX_BYTES = 512 * 1024 * 1024
+_RF_RUN_IDENTIFIER_KEYS = frozenset(
+    {"uuids", "cond_or_uncond", "sigmas", "sample_sigmas", "callbacks"}
+)
+
+
+def _log_timing(event: str, **fields: Any) -> None:
+    parts: List[str] = []
+    for name, value in fields.items():
+        if isinstance(value, bool):
+            rendered = "true" if value else "false"
+        elif isinstance(value, float):
+            rendered = f"{value:.1f}"
+        else:
+            rendered = str(value)
+        parts.append(f"{name}={rendered}")
+    logging.info("[Krea2 风格参考] %s %s", event, " ".join(parts))
+
+
+def _tensor_nbytes(value: Any) -> int:
+    if value is None:
+        return 0
+    if hasattr(value, "numel") and hasattr(value, "element_size"):
+        try:
+            return int(value.numel()) * int(value.element_size())
+        except Exception:
+            return 0
+    if isinstance(value, dict):
+        return sum(_tensor_nbytes(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return sum(_tensor_nbytes(item) for item in value)
+    return 0
+
+
+def _guard_objects(objects: Any) -> Optional[Tuple[Tuple[int, Any], ...]]:
+    guards: List[Tuple[int, Any]] = []
+    for obj in objects:
+        try:
+            guards.append((id(obj), weakref.ref(obj)))
+        except TypeError:
+            return None
+    return tuple(guards)
+
+
+def _guards_alive(guards: Any) -> bool:
+    for expected_id, reference in guards or ():
+        target = reference()
+        if target is None or id(target) != expected_id:
+            return False
+    return True
+
+
+class BoundedTensorLRU:
+    """Thread-safe CPU tensor cache with an explicit byte budget."""
+
+    def __init__(self, max_bytes: int, name: str = "tensor") -> None:
+        self.name = str(name)
+        self._max_bytes = max(0, int(max_bytes))
+        self._entries: "OrderedDict[Any, Dict[str, Any]]" = OrderedDict()
+        self._bytes = 0
+        self._lock = threading.RLock()
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    @property
+    def max_bytes(self) -> int:
+        return self._max_bytes
+
+    @max_bytes.setter
+    def max_bytes(self, value: int) -> None:
+        with self._lock:
+            self._max_bytes = max(0, int(value))
+            self._trim()
+
+    @property
+    def bytes(self) -> int:
+        with self._lock:
+            return self._bytes
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._entries)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+            self._bytes = 0
+
+    def _drop(self, key: Any) -> None:
+        entry = self._entries.pop(key, None)
+        if entry is not None:
+            self._bytes -= int(entry["nbytes"])
+            self.evictions += 1
+
+    def _trim(self) -> None:
+        while self._bytes > self._max_bytes and self._entries:
+            key = next(iter(self._entries))
+            self._drop(key)
+
+    def get(self, key: Any) -> Any:
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is None:
+                self.misses += 1
+                return None
+            if not _guards_alive(entry.get("guards")):
+                self._drop(key)
+                self.misses += 1
+                return None
+            self._entries.move_to_end(key)
+            self.hits += 1
+            return entry["value"]
+
+    def put(self, key: Any, value: Any, nbytes: int, guards: Any = ()) -> bool:
+        nbytes = max(0, int(nbytes))
+        with self._lock:
+            if nbytes > self._max_bytes:
+                return False
+            old = self._entries.pop(key, None)
+            if old is not None:
+                self._bytes -= int(old["nbytes"])
+            self._entries[key] = {
+                "value": value,
+                "nbytes": nbytes,
+                "guards": tuple(guards or ()),
+            }
+            self._bytes += nbytes
+            self._trim()
+            return key in self._entries
+
+
+_REFERENCE_LATENT_CACHE = BoundedTensorLRU(
+    _REFERENCE_LATENT_CACHE_MAX_BYTES, "krea2_reference_latent"
+)
+_RF_CACHE = BoundedTensorLRU(_RF_CACHE_MAX_BYTES, "krea2_rf_schedule")
+
+
+def _update_digest(digest: Any, value: Any, guards: Optional[List[Any]] = None) -> bool:
+    """Hash a value only when its content can be compared unambiguously."""
+    if value is None:
+        digest.update(b"none")
+        return True
+    if isinstance(value, bool):
+        digest.update(b"bool:" + (b"1" if value else b"0"))
+        return True
+    if isinstance(value, int):
+        digest.update(b"int:" + str(value).encode("ascii"))
+        return True
+    if isinstance(value, float):
+        digest.update(b"float:" + repr(float(value)).encode("ascii"))
+        return True
+    if isinstance(value, str):
+        digest.update(b"str:" + value.encode("utf-8"))
+        return True
+    if isinstance(value, bytes):
+        digest.update(b"bytes:" + value)
+        return True
+    if torch.is_tensor(value):
+        digest.update(b"tensor:")
+        digest.update(str(value.dtype).encode("ascii"))
+        digest.update(str(tuple(value.shape)).encode("ascii"))
+        try:
+            data = value.detach()
+            if data.dtype == torch.bfloat16:
+                data = data.float()
+            digest.update(data.to(device="cpu").contiguous().numpy().tobytes())
+        except Exception:
+            return False
+        return True
+    if isinstance(value, torch.dtype):
+        digest.update(b"dtype:" + str(value).encode("ascii"))
+        return True
+    if isinstance(value, torch.device):
+        digest.update(b"device:" + str(value).encode("ascii"))
+        return True
+    if isinstance(value, dict):
+        digest.update(b"dict:{")
+        for key, item in sorted(value.items(), key=lambda pair: repr(pair[0])):
+            if not _update_digest(digest, key, guards):
+                return False
+            digest.update(b"=")
+            if not _update_digest(digest, item, guards):
+                return False
+            digest.update(b",")
+        digest.update(b"}")
+        return True
+    if isinstance(value, (list, tuple)):
+        digest.update(b"seq[")
+        for item in value:
+            if not _update_digest(digest, item, guards):
+                return False
+            digest.update(b",")
+        digest.update(b"]")
+        return True
+    if callable(value):
+        digest.update(b"callable:" + str(id(value)).encode("ascii"))
+        if guards is not None:
+            guards.append(value)
+        return True
+    return False
 
 
 def _lerp(a: float, b: float, t: float) -> float:
@@ -141,6 +349,79 @@ def _vae_encode_image(vae: Any, image: torch.Tensor) -> Dict[str, torch.Tensor]:
         raise RuntimeError("vae input is invalid. Use the Krea2/Qwen image VAE.")
     encoded = vae.encode(image[:, :, :, :3])
     return {"samples": _latent_samples(encoded, "vae.encode(image)")}
+
+
+def _vae_state_token(vae: Any) -> Tuple[Optional[bytes], Optional[Tuple[Tuple[int, Any], ...]]]:
+    patcher = getattr(vae, "patcher", None)
+    first_stage = getattr(vae, "first_stage_model", None)
+    if patcher is None or first_stage is None:
+        return None, None
+    patches_uuid = getattr(patcher, "patches_uuid", None)
+    patcher_model = getattr(patcher, "model", None)
+    if not patches_uuid or patcher_model is None:
+        return None, None
+    guarded_objects: List[Any] = [vae, patcher, first_stage, patcher_model]
+    digest = hashlib.sha256()
+    config = {
+        name: getattr(vae, name)
+        for name in (
+            "device", "output_device", "vae_dtype", "latent_dim", "latent_channels",
+            "output_channels", "downscale_ratio", "upscale_ratio", "pad_channel_value",
+            "not_video", "disable_offload", "handles_tiling", "scale_factor", "shift_factor",
+        )
+        if hasattr(vae, name)
+    }
+    if not _update_digest(digest, config, guarded_objects):
+        return None, None
+    encoder_callables = (
+        getattr(vae, "process_input", None),
+        getattr(vae, "format_encoded", None),
+        getattr(type(vae), "vae_encode_crop_pixels", None),
+        getattr(type(first_stage), "encode", None),
+    )
+    if not _update_digest(digest, encoder_callables, guarded_objects):
+        return None, None
+    guards = _guard_objects(guarded_objects)
+    if guards is None:
+        return None, None
+    parts = (
+        type(vae).__module__,
+        type(vae).__qualname__,
+        str(id(vae)),
+        type(patcher).__module__,
+        type(patcher).__qualname__,
+        str(id(patcher)),
+        type(first_stage).__qualname__,
+        str(id(first_stage)),
+        type(patcher_model).__qualname__,
+        str(id(patcher_model)),
+        str(patches_uuid),
+        str(getattr(first_stage, "current_weight_patches_uuid", None)),
+        str(getattr(vae, "device", None)),
+        str(getattr(vae, "vae_dtype", None)),
+        digest.hexdigest(),
+    )
+    return "|".join(parts).encode("utf-8"), guards
+
+
+def _reference_latent_key(
+    vae: Any,
+    preview: torch.Tensor,
+    width: int,
+    height: int,
+    fit: str,
+    upscale_method: str,
+) -> Tuple[Optional[str], Optional[Tuple[Tuple[int, Any], ...]]]:
+    state, guards = _vae_state_token(vae)
+    if state is None or guards is None:
+        return None, None
+    digest = hashlib.sha256()
+    digest.update(b"krea2-reference-latent-v2")
+    digest.update(state)
+    digest.update(f"{int(width)}x{int(height)}:{fit}:{upscale_method}".encode("utf-8"))
+    if not _update_digest(digest, preview):
+        return None, None
+    return digest.hexdigest(), guards
 
 
 def _empty_latent(width: int, height: int, batch_size: int) -> Dict[str, torch.Tensor]:
@@ -1693,6 +1974,167 @@ def _linear_target(ref_clean: torch.Tensor, eps: torch.Tensor, sigma: float) -> 
     return (1.0 - sigma) * ref_clean + sigma * eps
 
 
+def _model_identity(
+    apply_model: Callable,
+) -> Tuple[Optional[bytes], Optional[Tuple[Tuple[int, Any], ...]]]:
+    base_model = getattr(apply_model, "__self__", None)
+    if base_model is None:
+        return None, None
+    diffusion_model = getattr(base_model, "diffusion_model", None)
+    sampling = getattr(base_model, "model_sampling", None)
+    if diffusion_model is None or sampling is None:
+        return None, None
+    patcher = getattr(base_model, "current_patcher", None)
+    if patcher is None:
+        return None, None
+    patches_uuid = getattr(patcher, "patches_uuid", None)
+    patcher_model = getattr(patcher, "model", None)
+    if not patches_uuid or patcher_model is None:
+        return None, None
+    # A fresh ModelPatcher clone shares patches_uuid and the same underlying model;
+    # only stable objects may participate in guards or the key.
+    guards = _guard_objects([base_model, diffusion_model, sampling, patcher_model])
+    if guards is None:
+        return None, None
+    parts = (
+        type(base_model).__module__,
+        type(base_model).__qualname__,
+        str(id(base_model)),
+        type(diffusion_model).__module__,
+        type(diffusion_model).__qualname__,
+        str(id(diffusion_model)),
+        type(sampling).__module__,
+        type(sampling).__qualname__,
+        str(id(sampling)),
+        type(patcher_model).__module__,
+        type(patcher_model).__qualname__,
+        str(id(patcher_model)),
+        str(patches_uuid),
+        str(getattr(base_model, "current_weight_patches_uuid", None)),
+    )
+    return "|".join(parts).encode("utf-8"), guards
+
+
+def _stable_rf_kwargs(rf_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """Drop per-run sampler identifiers that do not affect RF velocity values."""
+    stable: Dict[str, Any] = {}
+    for key, value in rf_kwargs.items():
+        if key == "transformer_options" and isinstance(value, dict):
+            stable[key] = {
+                name: item for name, item in value.items() if name not in _RF_RUN_IDENTIFIER_KEYS
+            }
+        else:
+            stable[key] = value
+    return stable
+
+
+def _rf_cache_key(
+    apply_model: Callable,
+    ref_for_build: torch.Tensor,
+    rf_kwargs: Dict[str, Any],
+    sampler_sigmas: List[float],
+    target_b: int,
+    rf_dtype: torch.dtype,
+    device: Any,
+    gamma: float,
+    seed: int,
+    rf_mode: str,
+) -> Tuple[Optional[str], Optional[Tuple[Tuple[int, Any], ...]]]:
+    identity, guards = _model_identity(apply_model)
+    if identity is None or guards is None:
+        return None, None
+    guard_objects: List[Any] = []
+    digest = hashlib.sha256()
+    digest.update(b"krea2-rf-schedule-v1")
+    digest.update(identity)
+    if not _update_digest(digest, ref_for_build, guard_objects):
+        return None, None
+    if not _update_digest(digest, _stable_rf_kwargs(rf_kwargs), guard_objects):
+        return None, None
+    digest.update(repr([float(value).hex() for value in sampler_sigmas]).encode("ascii"))
+    digest.update(str(int(target_b)).encode("ascii"))
+    digest.update(str(rf_dtype).encode("ascii"))
+    digest.update(str(device).encode("ascii"))
+    digest.update(repr(float(gamma)).encode("ascii"))
+    digest.update(str(int(seed)).encode("ascii"))
+    digest.update(str(rf_mode).encode("utf-8"))
+    if guard_objects:
+        extra = _guard_objects(guard_objects)
+        if extra is None:
+            return None, None
+        guards = guards + extra
+    return digest.hexdigest(), guards
+
+
+def _prepare_rf_cache(
+    apply_model: Callable,
+    ref_for_build: torch.Tensor,
+    rf_kwargs: Dict[str, Any],
+    sampler_sigmas: List[float],
+    target_b: int,
+    rf_dtype: torch.dtype,
+    device: Any,
+    gamma: float,
+    seed: int,
+    rf_mode: str,
+    build_fn: Optional[Callable[[torch.Tensor, List[float]], Tuple[Dict[float, torch.Tensor], Any, List[float]]]] = None,
+) -> Tuple[Dict[float, torch.Tensor], List[float], bool, float]:
+    started = time.perf_counter()
+    key, guards = _rf_cache_key(
+        apply_model, ref_for_build, rf_kwargs, sampler_sigmas, target_b,
+        rf_dtype, device, gamma, seed, rf_mode,
+    )
+    if key is not None:
+        entry = _RF_CACHE.get(key)
+        if entry is not None:
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+            moved = {}
+            for sigma, tensor in entry["rf"].items():
+                target = tensor.to(device=device, dtype=rf_dtype)
+                moved[float(sigma)] = target if target is not tensor else tensor.clone()
+            _log_timing(
+                "RF 缓存命中",
+                elapsed_ms=elapsed_ms,
+                bytes=_tensor_nbytes(entry["rf"]),
+                sigmas=len(entry["sigmas"]),
+                device=str(device),
+                entries=len(_RF_CACHE),
+            )
+            return moved, list(entry["sigmas"]), True, elapsed_ms
+
+    if build_fn is None:
+        velocity = _make_raw_velocity_apply_model_fn(apply_model)
+
+        def build_fn(reference: torch.Tensor, sigmas: List[float]):
+            return _build_rf_cache(
+                reference, sigmas, velocity, rf_kwargs,
+                gamma=float(gamma), seed=int(seed), rf_mode=str(rf_mode),
+            )
+
+    cache, _eps, sorted_sigmas = build_fn(ref_for_build, list(sampler_sigmas))
+    cpu_cache = {
+        float(sigma): tensor.detach().to(device="cpu").clone()
+        for sigma, tensor in cache.items()
+    }
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    stored = False
+    if key is not None:
+        stored = _RF_CACHE.put(
+            key,
+            {"rf": cpu_cache, "sigmas": list(sorted_sigmas)},
+            _tensor_nbytes(cpu_cache),
+            guards,
+        )
+    _log_timing(
+        "RF 缓存未命中",
+        elapsed_ms=elapsed_ms,
+        bytes=_tensor_nbytes(cpu_cache),
+        stored=stored,
+        entries=len(_RF_CACHE),
+    )
+    return cache, list(sorted_sigmas), False, elapsed_ms
+
+
 def _build_rf_cache(
     ref_clean: torch.Tensor,
     sampler_sigmas: List[float],
@@ -1817,7 +2259,31 @@ class Krea2StyleReference:
         if reference_image.shape[0] > 1:
             reference_image = reference_image[:1]
         preview = _fit_image_to_box(reference_image[:, :, :, :3], width, height, fit, upscale_method)
-        reference_latent = _vae_encode_image(vae, preview)
+        started = time.perf_counter()
+        key, guards = _reference_latent_key(vae, preview, width, height, fit, upscale_method)
+        samples = _REFERENCE_LATENT_CACHE.get(key) if key is not None else None
+        cached = samples is not None
+        if cached:
+            target_device = getattr(vae, "device", None) or preview.device
+            try:
+                samples = samples.to(device=target_device).clone()
+            except Exception:
+                cached = False
+                samples = None
+        if samples is None:
+            reference_latent = _vae_encode_image(vae, preview)
+            samples = reference_latent["samples"]
+            cpu_samples = samples.detach().to(device="cpu").clone()
+            if key is not None:
+                _REFERENCE_LATENT_CACHE.put(key, cpu_samples, _tensor_nbytes(cpu_samples), guards)
+        _log_timing(
+            "参考图 VAE 编码",
+            cached=cached,
+            elapsed_ms=(time.perf_counter() - started) * 1000.0,
+            bytes=_tensor_nbytes(samples),
+            size=f"{int(width)}x{int(height)}",
+        )
+        reference_latent = {"samples": samples}
         debug = f"single_reference=true; size={width}x{height}; fit={fit}; method={upscale_method}"
         return reference_latent, preview, debug
 
@@ -2012,6 +2478,8 @@ class Krea2StyleTransfer:
             "schedule_built": False,
             "eps": None,
             "run_count": 0,
+            "rf_build_ms": 0.0,
+            "rf_cache_hit": False,
         }
         rf_reference = dict(reference_latent)
         rf_reference["samples"] = reference_latent["samples"]
@@ -2035,8 +2503,23 @@ class Krea2StyleTransfer:
                 state["schedule_built"] = False
                 state["eps"] = None
                 state["run_count"] = int(state.get("run_count", 0)) + 1
+                state["rf_build_ms"] = 0.0
+                state["rf_cache_hit"] = False
                 state["cache"] = {0.0: ref_clean.detach().to(device="cpu").clone()}
-            return executor(model_wrap, sigmas, extra_args, callback, noise, latent_image, denoise_mask, disable_pbar)
+            started = time.perf_counter()
+            try:
+                return executor(model_wrap, sigmas, extra_args, callback, noise, latent_image, denoise_mask, disable_pbar)
+            finally:
+                total_ms = (time.perf_counter() - started) * 1000.0
+                build_ms = float(state.get("rf_build_ms", 0.0) or 0.0)
+                _log_timing(
+                    "采样完成",
+                    total_ms=total_ms,
+                    rf_build_ms=build_ms,
+                    sampler_without_rf_ms=max(0.0, total_ms - build_ms),
+                    rf_cache_hit=bool(state.get("rf_cache_hit", False)),
+                    run=int(state.get("run_count", 0)),
+                )
 
         comfy.patcher_extension.add_wrapper(
             comfy.patcher_extension.WrappersMP.SAMPLER_SAMPLE,
@@ -2102,19 +2585,24 @@ class Krea2StyleTransfer:
                 rf_dtype = _model_inference_dtype_from_apply_model(apply_model, input_x.dtype)
                 ref_for_build = _repeat_to_batch(ref_clean.to(device=input_x.device, dtype=rf_dtype), target_b)
                 rf_kwargs = _build_rf_conditioning_kwargs(c, ref_conditioning, target_b)
-                cache, eps, sorted_sigmas = _build_rf_cache(
+                cache, sorted_sigmas, rf_hit, build_ms = _prepare_rf_cache(
+                    apply_model,
                     ref_for_build,
-                    list(sampler_sigmas),
-                    _make_raw_velocity_apply_model_fn(apply_model),
                     rf_kwargs,
+                    list(sampler_sigmas),
+                    target_b,
+                    rf_dtype,
+                    input_x.device,
                     gamma=float(gamma),
                     seed=42,
                     rf_mode=str(rf_mode),
                 )
-                state["cache"] = {float(k): v.detach() for k, v in cache.items()}
-                state["eps"] = eps.detach()
+                state["cache"] = cache
+                state["eps"] = None
                 state["schedule_built"] = True
                 state["built_sigmas"] = list(sorted_sigmas)
+                state["rf_cache_hit"] = bool(rf_hit)
+                state["rf_build_ms"] = float(state.get("rf_build_ms", 0.0) or 0.0) + float(build_ms)
                 rf_reference["krea2_style_transfer_state"] = state
 
             cached, used_sigma = _rf_cache_lookup(state.get("cache", {}), sigma)
