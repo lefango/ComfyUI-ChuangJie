@@ -19,7 +19,8 @@ export function toggleStyleMultiSelect(config) {
     if (config.multi_select && config.styles.length > 1) throw Error("请先保留一个风格，再切换单选");
     return { ...config, multi_select: !config.multi_select };
 }
-export function renderStyleSummary(parent, getConfig, setConfig, showToggle = true) {
+export function renderStyleSummary(parent, getConfig, setConfig, showToggle = true, initialDetailsOpen) {
+    const wasOpen = parent.querySelector("details.pm-style-details")?.open;
     parent.replaceChildren();
     const c = getConfig();
     if (showToggle) {
@@ -29,7 +30,7 @@ export function renderStyleSummary(parent, getConfig, setConfig, showToggle = tr
         label.prepend(toggle); parent.append(label);
     }
     const details = el("details", "pm-style-details");
-    details.open = c.style_enabled;
+    details.open = wasOpen ?? initialDetailsOpen ?? c.style_enabled;
     const count = c.styles.length;
     const summary = el("summary", "", count ? `已选风格 · ${count} 项${c.style_enabled ? "" : " · 未启用"}` : "已选风格 · 未选择");
     details.append(summary);
@@ -110,7 +111,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
     }
     function renderSelected() {
         const c = getConfig();
-        selected.replaceChildren(); renderStyleSummary(selected, getConfig, value => { setConfig(value); render(); });
+        renderStyleSummary(selected, getConfig, value => { setConfig(value); render(); }, true, false);
         for (const snapshot of c.styles) {
             const current = library.styles.find(s => s.id === snapshot.id);
             if (!current) selected.append(el("p", "pm-muted", `${snapshot.name}：来源缺失，保留文本快照`));
@@ -137,7 +138,6 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         return favorite;
     }
     function renderDetail() {
-        if (activeEditor) { detail.replaceChildren(activeEditor.body); return; }
         detail.replaceChildren();
         const s = library.styles.find(item => item.id === focusedId);
         if (!s) { detail.append(el("h3", "pm-style-detail-title", "风格详情"), el("p", "pm-style-empty", "选择风格后查看描述、编辑或应用到当前节点。")); return; }
@@ -194,8 +194,12 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
     }
     async function editStyle(style = null) {
         if (activeEditor && !await activeEditor.cancel()) return;
-        const editor = { body: el("section", "pm-style-editor-form"), close: () => { activeEditor = null; render(); } };
-        editor.body.append(el("h3", "pm-style-editor-title", style ? "编辑风格" : "新建风格"));
+        const editor = dialog(style ? "编辑风格" : "新建风格");
+        editor.panel.classList.add("pm-style-editor-dialog");
+        editor.body.classList.add("pm-style-editor-form");
+        const closeEditor = editor.close;
+        editor.close = () => { activeEditor = null; closeEditor(); };
+        editor.body.append(el("p", "pm-muted", "填写风格名称和提示词；封面可选。"));
         const fields = {};
         for (const [key, title, type] of [["name", "名称", "input"], ["category", "分类", "input"], ["positive", "正面风格提示词", "textarea"], ["negative", "负面风格提示词", "textarea"]]) {
             const label = el("label", "pm-field", title), input = el(type); input.ariaLabel = title;
@@ -203,8 +207,10 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         }
         const type = el("select"); type.ariaLabel = "文本类型"; type.append(new Option("完整段落（不拆分长描述）", "paragraph"), new Option("逗号词条（参与词条去重）", "tags")); type.value = style?.text_type || "paragraph";
         const cover = el("input"); cover.type = "file"; cover.accept = "image/png,image/jpeg,image/webp"; cover.ariaLabel = "风格封面";
-        editor.body.append(el("label", "pm-field", "文本类型"), type, el("label", "pm-field", "封面（可选，不超过 1 MB）"), cover);
-        const feedback = el("div", "pm-error"); feedback.role = "status"; editor.body.append(feedback);
+        const typeField = el("label", "pm-field", "文本类型"); typeField.append(type);
+        const coverField = el("label", "pm-field", "封面（可选，不超过 1 MB）"); coverField.append(cover);
+        editor.body.append(typeField, coverField);
+        const feedback = el("div", "pm-error"); feedback.role = "status";
         const initial = JSON.stringify(Object.values(fields).map(f => f.value).concat(type.value));
         editor.cancel = async () => {
             if (!cover.files.length && initial === JSON.stringify(Object.values(fields).map(f => f.value).concat(type.value)) || await confirmAction("放弃未保存的风格草稿？", { title: "放弃草稿", confirmLabel: "放弃草稿", danger: true })) { editor.close(); return true; }
@@ -219,8 +225,11 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
                 editor.close(); await refresh();
             } catch (e) { feedback.textContent = e.message; }
             finally { submit.disabled = false; }
-        }); editor.body.append(submit, button("取消编辑", editor.cancel));
-        activeEditor = editor; render(); fields.name.focus();
+        });
+        const actions = el("div", "pm-style-editor-actions");
+        actions.append(submit, button("取消", editor.cancel));
+        editor.body.append(feedback, actions);
+        activeEditor = editor; fields.name.focus();
     }
     function render() {
         const referenceStrengthAvailable = Boolean(referenceStrength && styleReferenceControls && !styleReferenceControls.hidden);
@@ -242,7 +251,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         if (category && !groupStylesByCategory(library.styles).some(group => group.name === category)) { category = ""; focusedId = ""; }
         const matches = s => [s.name, s.english, s.positive, s.negative, s.category].join("\n").toLocaleLowerCase().includes(query);
         breadcrumb.replaceChildren(); overview.replaceChildren();
-        overview.hidden = Boolean(category); detailLayout.hidden = !category && !activeEditor; grid.hidden = !category;
+        overview.hidden = Boolean(category); detailLayout.hidden = !category; grid.hidden = !category;
         if (category) {
             breadcrumb.append(button("返回分类总览", async () => { if (activeEditor && !await activeEditor.cancel()) return; category = ""; focusedId = ""; render(); }), el("h3", "pm-style-category-title", category));
         } else {

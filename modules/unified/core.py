@@ -6,7 +6,7 @@ import re
 from .model.core import Invalid, options, filename, cover_key, text
 from .lora.core import state as lora_state
 
-VERSION = "0.2.19"
+VERSION = "0.2.20"
 EDIT_MIN_DIMENSION = 16
 MANAGER = "CJUnifiedModelLoaderTest"
 ASSET = "CJUnifiedAssetTest"
