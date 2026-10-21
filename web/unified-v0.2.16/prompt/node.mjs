@@ -4,7 +4,7 @@ import { openStyles, renderStyleSummary } from "./styles.mjs";
 import { openResolutionSelector } from "./resolution.mjs";
 
 export class PromptView {
-    constructor(node, client, { mount = null, toolbar = null, stylePreviewMount = null } = {}) {
+    constructor(node, client, { mount = null, toolbar = null } = {}) {
         this.node = node; this.client = client; this.version = 0; this.sides = {}; this.lastExecution = null;
         this.kreaEligible = false; this.styleCoverObjectUrl = ""; this.styleCoverKey = "";
         this.element = el("div", "pm-node pm-embedded"); isolate(this.element);
@@ -21,8 +21,6 @@ export class PromptView {
         this.styleSummary = el("div", "pm-node-styles");
         if (!toolbar) this.element.append(this.toolbar);
         this.element.append(this.encodingBadge, this.textOutputControls.element, this.styleSummary, this.status, this.combo);
-        const previewMount = stylePreviewMount || this.element;
-        previewMount.append(this.styleReferenceControls.element);
         for (const side of ["positive", "negative"]) this.createSide(side);
         mount?.append(this.element);
         this.timer = setInterval(() => this.update(), 350);
@@ -44,7 +42,7 @@ export class PromptView {
     }
     setConfig(value) { this.write("prompt_config", JSON.stringify(value)); this.update(); }
     openPromptManager() { return openManager(this.client, () => this.config(), value => this.setConfig(value)); }
-    openStyleManager() { return openStyles(this.client, () => this.config(), value => this.setConfig(value)); }
+    openStyleManager() { return openStyles(this.client, () => this.config(), value => this.setConfig(value), this.styleReferenceControls.element); }
     openResolutionManager() { return openResolutionSelector(() => this.resolution(), value => this.setResolution(value)); }
     write(name, value) {
         const widget = this.native(name); widget.value = value; widget.callback?.(value);

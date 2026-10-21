@@ -1,16 +1,16 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.15/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.15/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.15/prompt/index.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.15/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.15/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.15/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.15/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.15/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.16/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.16/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.16/prompt/index.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.16/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.16/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.16/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.16/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.16/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.15/lora/manager.css", "./unified-v0.2.15/style.css", "./unified-v0.2.15/image-editor.css", "./unified-v0.2.15/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.16/lora/manager.css", "./unified-v0.2.16/style.css", "./unified-v0.2.16/image-editor.css", "./unified-v0.2.16/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -375,13 +375,11 @@ class Preview {
         const model = el("section", "um-panel um-model-card"); model.append(el("h3", "", "模型预设封面"));
         this.modelCover = el("div", "um-card-cover", "未选择模型"); this.modelName = el("strong", "", "模型与 LoRA");
         model.append(this.modelCover, this.modelName);
-        const style = el("section", "um-panel um-style-card"); style.append(el("h3", "", "风格参考"));
-        this.styleReferenceMount = el("div", "um-style-reference-mount"); style.append(this.styleReferenceMount);
-        assets.append(model,style); this.left.append(assets);
+        assets.append(model); this.left.append(assets);
     }
     createPromptArea() {
         const area = el("section", "um-prompt-area");
-        this.promptView = new PromptView(this.node, promptRequest, {mount:area,toolbar:this.toolbar,stylePreviewMount:this.styleReferenceMount});
+        this.promptView = new PromptView(this.node, promptRequest, {mount:area,toolbar:this.toolbar});
         const manage = button("管理模型与 LoRA",()=>this.openManager(),"um-primary");
         this.toolbar.prepend(manage);
         this.toolbar.append(button("K 采样器设置",()=>this.openSamplerSettings()));
