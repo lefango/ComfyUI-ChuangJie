@@ -219,10 +219,9 @@ def _update_digest(digest: Any, value: Any, guards: Optional[List[Any]] = None) 
         digest.update(b"]")
         return True
     if callable(value):
-        digest.update(b"callable:" + str(id(value)).encode("ascii"))
-        if guards is not None:
-            guards.append(value)
-        return True
+        # Callable objects may close over mutable state; identity alone is not
+        # enough to prove that two RF evaluations are equivalent.
+        return False
     return False
 
 
@@ -1974,8 +1973,67 @@ def _linear_target(ref_clean: torch.Tensor, eps: torch.Tensor, sigma: float) -> 
     return (1.0 - sigma) * ref_clean + sigma * eps
 
 
+def _active_hook_state(patcher: Any) -> Tuple[bool, Optional[Tuple[Any, ...]]]:
+    """Return whether active hooks are dynamic and a stable static-hook token."""
+    current_hooks = getattr(patcher, "current_hooks", None)
+    if current_hooks is None:
+        return False, ("no-hooks",)
+    hook_list = getattr(current_hooks, "hooks", None)
+    if hook_list is None:
+        return True, None
+    try:
+        hooks = list(hook_list)
+    except Exception:
+        return True, None
+    if not hooks:
+        return False, ("no-hooks",)
+
+    token: List[Any] = []
+    for hook in hooks:
+        keyframe_group = getattr(hook, "hook_keyframe", None)
+        keyframes = getattr(keyframe_group, "keyframes", None)
+        if keyframes is None:
+            return True, None
+        strengths: List[float] = []
+        try:
+            for keyframe in keyframes:
+                strength = getattr(keyframe, "strength", None)
+                if isinstance(strength, bool) or not isinstance(strength, (int, float)):
+                    return True, None
+                strengths.append(float(strength))
+        except Exception:
+            return True, None
+        if len({value.hex() for value in strengths}) > 1:
+            return True, None
+
+        current_strength = getattr(hook, "strength", None)
+        if isinstance(current_strength, bool) or not isinstance(current_strength, (int, float)):
+            return True, None
+        hook_ref = getattr(hook, "hook_ref", hook)
+        token.append(
+            (
+                type(hook).__module__,
+                type(hook).__qualname__,
+                id(hook_ref),
+                tuple(value.hex() for value in strengths),
+                float(current_strength).hex(),
+            )
+        )
+    return False, tuple(token)
+
+
+def _has_dynamic_weight_hooks(apply_model: Callable) -> bool:
+    base_model = getattr(apply_model, "__self__", None)
+    patcher = getattr(base_model, "current_patcher", None)
+    if patcher is None:
+        return False
+    dynamic, _token = _active_hook_state(patcher)
+    return dynamic
+
+
 def _model_identity(
     apply_model: Callable,
+    include_active_static_hooks: bool = False,
 ) -> Tuple[Optional[bytes], Optional[Tuple[Tuple[int, Any], ...]]]:
     base_model = getattr(apply_model, "__self__", None)
     if base_model is None:
@@ -1987,17 +2045,10 @@ def _model_identity(
     patcher = getattr(base_model, "current_patcher", None)
     if patcher is None:
         return None, None
+    hook_dynamic, hook_token = _active_hook_state(patcher)
     current_hooks = getattr(patcher, "current_hooks", None)
     if current_hooks is not None:
-        hook_list = getattr(current_hooks, "hooks", None)
-        if hook_list is None:
-            return None, None
-        try:
-            if len(hook_list) > 0:
-                # ComfyUI applies WeightHooks in-place without changing patches_uuid;
-                # hook/keyframe state therefore cannot safely share an RF schedule.
-                return None, None
-        except Exception:
+        if not include_active_static_hooks or hook_dynamic or hook_token is None:
             return None, None
     patches_uuid = getattr(patcher, "patches_uuid", None)
     patcher_model = getattr(patcher, "model", None)
@@ -2023,21 +2074,272 @@ def _model_identity(
         str(id(patcher_model)),
         str(patches_uuid),
         str(getattr(base_model, "current_weight_patches_uuid", None)),
+        repr(hook_token),
     )
     return "|".join(parts).encode("utf-8"), guards
 
 
-def _stable_rf_kwargs(rf_kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    """Drop per-run sampler identifiers that do not affect RF velocity values."""
+def _stable_rf_kwargs(rf_kwargs: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Normalize only ComfyUI run metadata; bypass custom patch/callback state."""
     stable: Dict[str, Any] = {}
     for key, value in rf_kwargs.items():
         if key == "transformer_options" and isinstance(value, dict):
+            # Custom patches may read uuids/sigmas or retain mutable callback
+            # state. Never reuse a cross-run RF schedule in that case.
+            if value.get("callbacks") or value.get("patches"):
+                return None
             stable[key] = {
                 name: item for name, item in value.items() if name not in _RF_RUN_IDENTIFIER_KEYS
             }
         else:
             stable[key] = value
     return stable
+
+
+def _rf_run_schedule_key(
+    apply_model: Callable,
+    input_shape: Tuple[int, ...],
+    input_dtype: torch.dtype,
+    sampler_sigmas: List[float],
+    device: Any,
+    sample_sigmas_token: Any,
+    hook_token: Any,
+    context_token: Any = None,
+    run_generation: int = 0,
+) -> Tuple[Any, ...]:
+    identity, _guards = _model_identity(apply_model, include_active_static_hooks=True)
+    if identity is None:
+        base_model = getattr(apply_model, "__self__", None)
+        identity = f"untrusted-model:{id(base_model)}".encode("ascii")
+    return (
+        int(run_generation),
+        identity,
+        tuple(int(value) for value in input_shape),
+        str(input_dtype),
+        tuple(float(value).hex() for value in sampler_sigmas),
+        str(device),
+        repr(sample_sigmas_token),
+        repr(hook_token),
+        repr(context_token),
+    )
+
+
+def _runtime_context_token(value: Any) -> Any:
+    """Build an identity token for local-only state that cannot be content-hashed."""
+    if value is None or isinstance(value, (bool, int, float, str, bytes)):
+        return (type(value).__name__, value)
+    if callable(value):
+        return ("callable", id(value))
+    if torch.is_tensor(value):
+        try:
+            data_ptr = int(value.data_ptr())
+        except Exception:
+            data_ptr = None
+        try:
+            version = int(value._version)
+        except Exception:
+            version = None
+        return (
+            "tensor",
+            str(value.dtype),
+            tuple(value.shape),
+            str(value.device),
+            data_ptr,
+            version,
+        )
+    if isinstance(value, dict):
+        return tuple(
+            (repr(key), _runtime_context_token(item))
+            for key, item in sorted(value.items(), key=lambda pair: repr(pair[0]))
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_runtime_context_token(item) for item in value)
+    return (type(value).__module__, type(value).__qualname__, id(value))
+
+
+def _rf_kwargs_run_context_token(rf_kwargs: Dict[str, Any]) -> Any:
+    """Create a stable run-local token across ComfyUI's per-step cond_cat calls."""
+    stable: Dict[str, Any] = {}
+    per_call_metadata = {"uuids", "cond_or_uncond", "sigmas", "sample_sigmas"}
+    for key, value in rf_kwargs.items():
+        if key == "transformer_options" and isinstance(value, dict):
+            stable[key] = {
+                name: item for name, item in value.items() if name not in per_call_metadata
+            }
+        else:
+            stable[key] = value
+    return _run_context_value_token(stable)
+
+
+def _run_context_value_token(value: Any) -> Any:
+    """Tokenize run-local values without relying on freshly concatenated tensor addresses."""
+    if torch.is_tensor(value):
+        try:
+            version = int(value._version)
+        except Exception:
+            version = None
+        return (
+            "tensor",
+            str(value.dtype),
+            tuple(int(size) for size in value.shape),
+            str(value.device),
+            version,
+        )
+    if callable(value):
+        return ("callable", id(value))
+    if isinstance(value, dict):
+        return tuple(
+            (repr(key), _run_context_value_token(item))
+            for key, item in sorted(value.items(), key=lambda pair: repr(pair[0]))
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_run_context_value_token(item) for item in value)
+    return _runtime_context_token(value)
+
+
+def _rf_condition_branch_token(transformer_options: Any) -> Any:
+    """Use ComfyUI's stable per-condition UUIDs and CFG branch IDs within a run."""
+    if not isinstance(transformer_options, dict):
+        return (None, None)
+
+    def marker(value: Any) -> Any:
+        if value is None or isinstance(value, (bool, int, float, str, bytes)):
+            return (type(value).__name__, value)
+        if isinstance(value, (list, tuple)):
+            return tuple(marker(item) for item in value)
+        if isinstance(value, dict):
+            return tuple(
+                (repr(key), marker(item))
+                for key, item in sorted(value.items(), key=lambda pair: repr(pair[0]))
+            )
+        return (type(value).__module__, type(value).__qualname__, str(value))
+
+    return (
+        marker(transformer_options.get("uuids")),
+        marker(transformer_options.get("cond_or_uncond")),
+    )
+
+
+def _rf_run_source_context_token(
+    ref_clean: torch.Tensor,
+    c: Dict[str, Any],
+    ref_conditioning: Any,
+) -> Any:
+    """Tokenize stable sampler inputs before building temporary merged tensors."""
+    transformer_options = c.get("transformer_options") if isinstance(c, dict) else None
+    return (
+        _runtime_context_token(ref_clean),
+        _rf_kwargs_run_context_token(c),
+        _rf_condition_branch_token(transformer_options),
+        _runtime_context_token(ref_conditioning),
+    )
+
+
+def _rf_kwargs_has_thread_local_context(rf_kwargs: Dict[str, Any]) -> bool:
+    transformer_options = rf_kwargs.get("transformer_options")
+    if not isinstance(transformer_options, dict):
+        return False
+    return bool(transformer_options.get("callbacks") or transformer_options.get("patches"))
+
+
+def _get_or_build_run_scoped_cache(
+    state: Dict[str, Any],
+    cache_name: str,
+    build_locks_name: str,
+    key: Any,
+    build_fn: Callable[[], Any],
+    max_entries: int,
+    run_generation: Optional[int] = None,
+) -> Tuple[Any, bool]:
+    registry_lock = state.setdefault("_schedule_lock", threading.RLock())
+    with registry_lock:
+        cache = state.setdefault(cache_name, OrderedDict())
+        generation = int(state.get("run_generation", 0))
+        expected_generation = generation if run_generation is None else int(run_generation)
+        cached = cache.get(key) if generation == expected_generation else None
+        if cached is not None:
+            cache.move_to_end(key)
+            return cached, False
+        build_locks = state.setdefault(build_locks_name, {})
+        entry = build_locks.get(key)
+        if entry is None:
+            entry = {"lock": threading.Lock(), "users": 0}
+            build_locks[key] = entry
+        entry["users"] += 1
+
+    try:
+        # Serialize identical keys, but do not hold the shared registry lock
+        # while running model forwards. Different devices/contexts can build
+        # their RF schedules concurrently.
+        with entry["lock"]:
+            with registry_lock:
+                current_generation = int(state.get("run_generation", 0))
+                cached = cache.get(key) if current_generation == expected_generation else None
+                if cached is not None:
+                    cache.move_to_end(key)
+                    return cached, False
+
+            built = build_fn()
+            with registry_lock:
+                # Do not let an old sampler refill or evict entries in a newer
+                # scope if its long RF build finishes after that scope starts.
+                if int(state.get("run_generation", 0)) == expected_generation:
+                    cache[key] = built
+                    while len(cache) > max(1, int(max_entries)):
+                        cache.popitem(last=False)
+            return built, True
+    finally:
+        with registry_lock:
+            entry["users"] -= 1
+            if entry["users"] <= 0 and build_locks.get(key) is entry:
+                build_locks.pop(key, None)
+
+
+def _get_or_build_run_schedule(
+    state: Dict[str, Any],
+    key: Any,
+    build_fn: Callable[[], Any],
+    max_entries: int = 4,
+    run_generation: Optional[int] = None,
+) -> Tuple[Any, bool]:
+    return _get_or_build_run_scoped_cache(
+        state,
+        "run_schedules",
+        "_schedule_build_locks",
+        key,
+        build_fn,
+        max_entries,
+        run_generation,
+    )
+
+
+def _get_or_build_run_context_key(
+    state: Dict[str, Any],
+    key: Any,
+    build_fn: Callable[[], Any],
+    max_entries: int = 8,
+    run_generation: Optional[int] = None,
+) -> Tuple[Any, bool]:
+    return _get_or_build_run_scoped_cache(
+        state,
+        "rf_context_keys",
+        "_rf_context_build_locks",
+        key,
+        build_fn,
+        max_entries,
+        run_generation,
+    )
+
+
+def _begin_run_schedule_scope(state: Dict[str, Any]) -> int:
+    """Start a sampler-local cache scope so mutable kwargs cannot leak across runs."""
+    lock = state.setdefault("_schedule_lock", threading.RLock())
+    with lock:
+        generation = int(state.get("run_generation", 0)) + 1
+        state["run_generation"] = generation
+        state.setdefault("run_schedules", OrderedDict()).clear()
+        state.setdefault("rf_context_keys", OrderedDict()).clear()
+        return generation
 
 
 def _rf_cache_key(
@@ -2051,9 +2353,13 @@ def _rf_cache_key(
     gamma: float,
     seed: int,
     rf_mode: str,
+    include_active_static_hooks: bool = False,
 ) -> Tuple[Optional[str], Optional[Tuple[Tuple[int, Any], ...]]]:
-    identity, guards = _model_identity(apply_model)
+    identity, guards = _model_identity(apply_model, include_active_static_hooks)
     if identity is None or guards is None:
+        return None, None
+    stable_kwargs = _stable_rf_kwargs(rf_kwargs)
+    if stable_kwargs is None:
         return None, None
     guard_objects: List[Any] = []
     digest = hashlib.sha256()
@@ -2061,7 +2367,7 @@ def _rf_cache_key(
     digest.update(identity)
     if not _update_digest(digest, ref_for_build, guard_objects):
         return None, None
-    if not _update_digest(digest, _stable_rf_kwargs(rf_kwargs), guard_objects):
+    if not _update_digest(digest, stable_kwargs, guard_objects):
         return None, None
     digest.update(repr([float(value).hex() for value in sampler_sigmas]).encode("ascii"))
     digest.update(str(int(target_b)).encode("ascii"))
@@ -2090,12 +2396,16 @@ def _prepare_rf_cache(
     seed: int,
     rf_mode: str,
     build_fn: Optional[Callable[[torch.Tensor, List[float]], Tuple[Dict[float, torch.Tensor], Any, List[float]]]] = None,
+    cache_identity: Optional[Tuple[Optional[str], Optional[Tuple[Tuple[int, Any], ...]]]] = None,
 ) -> Tuple[Dict[float, torch.Tensor], List[float], bool, float]:
     started = time.perf_counter()
-    key, guards = _rf_cache_key(
-        apply_model, ref_for_build, rf_kwargs, sampler_sigmas, target_b,
-        rf_dtype, device, gamma, seed, rf_mode,
-    )
+    if cache_identity is None:
+        key, guards = _rf_cache_key(
+            apply_model, ref_for_build, rf_kwargs, sampler_sigmas, target_b,
+            rf_dtype, device, gamma, seed, rf_mode,
+        )
+    else:
+        key, guards = cache_identity
     if key is not None:
         entry = _RF_CACHE.get(key)
         if entry is not None:
@@ -2488,6 +2798,12 @@ class Krea2StyleTransfer:
             "cache": {0.0: ref_clean.detach().to(device="cpu").clone()},
             "sampler_sigmas": None,
             "schedule_built": False,
+            "run_schedules": OrderedDict(),
+            "rf_context_keys": OrderedDict(),
+            "_schedule_lock": threading.RLock(),
+            "_schedule_build_locks": {},
+            "_rf_context_build_locks": {},
+            "run_generation": 0,
             "eps": None,
             "run_count": 0,
             "rf_build_ms": 0.0,
@@ -2511,26 +2827,31 @@ class Krea2StyleTransfer:
         ):
             found = _coerce_sigma_sequence(sigmas)
             if found is not None:
-                state["sampler_sigmas"] = list(found)
-                state["schedule_built"] = False
-                state["eps"] = None
-                state["run_count"] = int(state.get("run_count", 0)) + 1
-                state["rf_build_ms"] = 0.0
-                state["rf_cache_hit"] = False
-                state["cache"] = {0.0: ref_clean.detach().to(device="cpu").clone()}
+                with state["_schedule_lock"]:
+                    state["sampler_sigmas"] = list(found)
+                    state["schedule_built"] = False
+                    state["eps"] = None
+                    state["run_count"] = int(state.get("run_count", 0)) + 1
+                    _begin_run_schedule_scope(state)
+                    state["rf_build_ms"] = 0.0
+                    state["rf_cache_hit"] = False
+                    state["cache"] = {0.0: ref_clean.detach().to(device="cpu").clone()}
             started = time.perf_counter()
             try:
                 return executor(model_wrap, sigmas, extra_args, callback, noise, latent_image, denoise_mask, disable_pbar)
             finally:
                 total_ms = (time.perf_counter() - started) * 1000.0
-                build_ms = float(state.get("rf_build_ms", 0.0) or 0.0)
+                with state["_schedule_lock"]:
+                    build_ms = float(state.get("rf_build_ms", 0.0) or 0.0)
+                    cache_hit = bool(state.get("rf_cache_hit", False))
+                    run_count = int(state.get("run_count", 0))
                 _log_timing(
                     "采样完成",
                     total_ms=total_ms,
                     rf_build_ms=build_ms,
                     sampler_without_rf_ms=max(0.0, total_ms - build_ms),
-                    rf_cache_hit=bool(state.get("rf_cache_hit", False)),
-                    run=int(state.get("run_count", 0)),
+                    rf_cache_hit=cache_hit,
+                    run=run_count,
                 )
 
         comfy.patcher_extension.add_wrapper(
@@ -2566,7 +2887,11 @@ class Krea2StyleTransfer:
                     )
                 return apply_model(input_x, timestep, **c)
 
-            sampler_sigmas = state.get("sampler_sigmas")
+            sampler_sigmas = _coerce_sigma_sequence(to.get("sample_sigmas"))
+            with state["_schedule_lock"]:
+                run_generation = int(state.get("run_generation", 0))
+                if sampler_sigmas is None:
+                    sampler_sigmas = state.get("sampler_sigmas")
             if sampler_sigmas is None:
                 raise RuntimeError("Krea2 Style Transfer did not capture the sampler sigma schedule.")
             progress = _sigma_to_progress(sigma, list(sampler_sigmas))
@@ -2593,11 +2918,37 @@ class Krea2StyleTransfer:
             }
             to[_CONFIG_KEY] = style_cfg
 
-            if not state.get("schedule_built", False):
-                rf_dtype = _model_inference_dtype_from_apply_model(apply_model, input_x.dtype)
-                ref_for_build = _repeat_to_batch(ref_clean.to(device=input_x.device, dtype=rf_dtype), target_b)
+            if _has_dynamic_weight_hooks(apply_model):
+                raise RuntimeError(
+                    "Krea2 参考风格无法安全处理随采样步变化的 WeightHook/LoRA 关键帧。"
+                    "请改用固定权重，或移除变化权重关键帧后再生成。"
+                )
+
+            rf_dtype = _model_inference_dtype_from_apply_model(apply_model, input_x.dtype)
+            _dynamic, hook_token = _active_hook_state(
+                getattr(getattr(apply_model, "__self__", None), "current_patcher", None)
+            )
+            context_token = _rf_run_source_context_token(ref_clean, c, ref_conditioning)
+            if _rf_kwargs_has_thread_local_context(c):
+                context_token = ("thread-local", threading.get_ident(), context_token)
+            context_identity = _rf_run_schedule_key(
+                apply_model,
+                tuple(input_x.shape),
+                rf_dtype,
+                list(sampler_sigmas),
+                input_x.device,
+                tuple(float(value).hex() for value in sampler_sigmas),
+                hook_token,
+                context_token=context_token,
+                run_generation=run_generation,
+            )
+
+            def build_rf_context_key():
+                ref_for_build = _repeat_to_batch(
+                    ref_clean.to(device=input_x.device, dtype=rf_dtype), target_b
+                )
                 rf_kwargs = _build_rf_conditioning_kwargs(c, ref_conditioning, target_b)
-                cache, sorted_sigmas, rf_hit, build_ms = _prepare_rf_cache(
+                cache_identity = _rf_cache_key(
                     apply_model,
                     ref_for_build,
                     rf_kwargs,
@@ -2608,16 +2959,68 @@ class Krea2StyleTransfer:
                     gamma=float(gamma),
                     seed=42,
                     rf_mode=str(rf_mode),
+                    include_active_static_hooks=True,
                 )
-                state["cache"] = cache
-                state["eps"] = None
-                state["schedule_built"] = True
-                state["built_sigmas"] = list(sorted_sigmas)
-                state["rf_cache_hit"] = bool(rf_hit)
-                state["rf_build_ms"] = float(state.get("rf_build_ms", 0.0) or 0.0) + float(build_ms)
-                rf_reference["krea2_style_transfer_state"] = state
+                # Keep tensors and callbacks alive for the whole sampler scope,
+                # so identity tokens cannot alias newly allocated objects.
+                return cache_identity[0], cache_identity[1], rf_kwargs, ref_for_build
 
-            cached, used_sigma = _rf_cache_lookup(state.get("cache", {}), sigma)
+            (
+                rf_context_key,
+                context_guards,
+                rf_kwargs,
+                ref_for_build,
+            ), _built_context_key = _get_or_build_run_context_key(
+                state,
+                context_identity,
+                build_rf_context_key,
+                run_generation=run_generation,
+            )
+            schedule_key = _rf_run_schedule_key(
+                apply_model,
+                tuple(input_x.shape),
+                rf_dtype,
+                list(sampler_sigmas),
+                input_x.device,
+                tuple(float(value).hex() for value in sampler_sigmas),
+                hook_token,
+                context_token=rf_context_key or context_identity,
+                run_generation=run_generation,
+            )
+
+            def build_run_schedule():
+                return _prepare_rf_cache(
+                    apply_model,
+                    ref_for_build,
+                    rf_kwargs,
+                    list(sampler_sigmas),
+                    target_b,
+                    rf_dtype,
+                    input_x.device,
+                    gamma=float(gamma),
+                    seed=42,
+                    rf_mode=str(rf_mode),
+                    cache_identity=(rf_context_key, context_guards),
+                )
+
+            (cache, sorted_sigmas, rf_hit, build_ms), built_run_schedule = _get_or_build_run_schedule(
+                state,
+                schedule_key,
+                build_run_schedule,
+                run_generation=run_generation,
+            )
+            if built_run_schedule:
+                with state["_schedule_lock"]:
+                    if int(state.get("run_generation", 0)) == run_generation:
+                        state["cache"] = cache
+                        state["eps"] = None
+                        state["schedule_built"] = True
+                        state["built_sigmas"] = list(sorted_sigmas)
+                        state["rf_cache_hit"] = bool(state.get("rf_cache_hit", False) or rf_hit)
+                        state["rf_build_ms"] = float(state.get("rf_build_ms", 0.0) or 0.0) + float(build_ms)
+                        rf_reference["krea2_style_transfer_state"] = state
+
+            cached, used_sigma = _rf_cache_lookup(cache, sigma)
             if cached is None:
                 raise RuntimeError(f"Krea2 Style Transfer has no RF cache entry for sigma={sigma:.6f}.")
             ref_noisy = _repeat_to_batch(cached.to(device=input_x.device, dtype=input_x.dtype), target_b)
