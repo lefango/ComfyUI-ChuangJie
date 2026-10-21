@@ -110,13 +110,44 @@ export class PromptView {
         const status = el("p", "pm-muted", "Krea2 风格参考会根据已选风格封面自动应用。");
         const preview = el("img", "pm-krea-preview"); preview.alt = "主风格参考封面"; preview.hidden = true;
         const roles = el("div", "pm-krea-roles");
+        const strength = el("details", "pm-krea-strength");
+        strength.append(el("summary", "", "风格参考强度"));
+        const settings = {};
+        const descriptions = {
+            low_scale_end: "1.1 为默认基准。适当调低有助于保留生成细节；调高可能影响画质。",
+            ref_k_strength: "1.1 为默认基准。提高可补足风格特征；过高可能干扰内容与细节。",
+        };
+        for (const [key, title, min, max] of [
+            ["low_scale_end", "参考强度", -4, 8],
+            ["ref_k_strength", "风格还原强度", 0, 5],
+        ]) {
+            const row = el("label", "pm-krea-strength-control");
+            const heading = el("span", "pm-krea-strength-heading");
+            const label = el("span", "", title);
+            const input = el("input"); input.type = "number"; input.min = String(min); input.max = String(max);
+            input.step = "0.01"; input.value = "1.1"; input.ariaLabel = title;
+            heading.append(label);
+            row.append(heading, input, el("span", "pm-muted", descriptions[key]));
+            strength.append(row);
+            input.addEventListener("change", () => {
+                const config = this.config();
+                const raw = input.value.trim(), value = Number(raw);
+                if (!raw || !Number.isFinite(value) || value < min || value > max) {
+                    input.value = String(config.krea_style_reference[key]);
+                    return;
+                }
+                config.krea_style_reference[key] = value;
+                this.setConfig(config);
+            });
+            settings[key] = { input };
+        }
         const retry = button("重新载入封面", () => { this.referenceErrorKey = ""; this.syncStyleReference(true); });
         retry.hidden = true;
         const detail = el("details", "pm-krea-preview-section");
         detail.append(el("summary", "", "主参考封面预览"), preview, retry);
         const section = el("section", "pm-krea-state"); section.hidden = true;
-        section.append(status, roles, detail);
-        return { element: section, detail, status, preview, roles, retry };
+        section.append(status, roles, strength, detail);
+        return { element: section, detail, status, preview, roles, retry, strength, settings };
     }
     syncStyleReference(retry = false) {
         const c = this.styleReferenceControls, active = this.kreaEligible;
@@ -125,16 +156,21 @@ export class PromptView {
         let config;
         try { config = this.config(); } catch { c.status.textContent = "风格配置无效，请重新选择风格。"; return; }
         const [primary, ...secondary] = config.styles;
+        for (const [key, controls] of Object.entries(c.settings)) {
+            controls.input.value = String(config.krea_style_reference[key]);
+        }
         c.roles.replaceChildren();
-        if (!primary) { c.preview.hidden = true; c.status.textContent = "未选择风格封面；仍可使用提示词正常生成。"; c.retry.hidden = true; this.revokeStyleCover(); return; }
+        if (!primary) { c.strength.hidden = true; c.preview.hidden = true; c.status.textContent = "未选择风格封面；仍可使用提示词正常生成。"; c.retry.hidden = true; this.revokeStyleCover(); return; }
         c.roles.append(el("p", "", `主参考图：${primary.name}`));
         for (const style of secondary) c.roles.append(el("p", "pm-muted", `辅助文字：${style.name}`));
         const key = `${primary.id}:${primary.revision}:${primary.image || ""}`;
         if (!primary.image) {
+            c.strength.hidden = true;
             c.preview.hidden = true;
             c.status.textContent = `主风格“${primary.name}”没有封面；仍会应用所选风格文字。`;
             c.retry.hidden = true; this.revokeStyleCover(); return;
         }
+        c.strength.hidden = false;
         if (this.styleCoverKey && this.styleCoverKey !== key) this.revokeStyleCover();
         if (this.styleCoverKey === key && this.styleCoverObjectUrl) {
             c.preview.src = this.styleCoverObjectUrl; c.preview.hidden = false;

@@ -3,7 +3,8 @@ import json
 import base64
 import io
 import re
-from .core import EMPTY_CONFIG, merge, merge_selected, config as parse_config
+from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT, merge,
+                   merge_selected, config as parse_config)
 
 LATENT_MAX_RESOLUTION = 16384
 
@@ -47,13 +48,14 @@ def execution_key(positive, negative, config, positive_extra="", negative_extra=
 
 def krea_text_config(config_value):
     snapshot = parse_config(config_value)
+    reference_settings = snapshot.get("krea_style_reference", dict(KREA_STYLE_REFERENCE_DEFAULT))
     if snapshot.get("schema") != 2 or not snapshot.get("styles"):
-        return None, config_value
+        return None, config_value, reference_settings
     primary = snapshot["styles"][0]
     if not primary.get("image"):
-        return None, config_value
+        return None, config_value, reference_settings
     text_snapshot = dict(snapshot, styles=snapshot["styles"][1:], style_enabled=bool(snapshot["styles"][1:]))
-    return primary, json.dumps(text_snapshot, ensure_ascii=False)
+    return primary, json.dumps(text_snapshot, ensure_ascii=False), reference_settings
 
 
 class PromptManager:
@@ -126,8 +128,9 @@ class PromptManager:
         enabled = bool(krea_enabled)
         text_config = config
         primary_style = None
+        reference_settings = dict(KREA_STYLE_REFERENCE_DEFAULT)
         if enabled:
-            primary_style, text_config = krea_text_config(config)
+            primary_style, text_config, reference_settings = krea_text_config(config)
             if primary_style:
                 expected_key = f"{primary_style['id']}:{primary_style['revision']}:{primary_style['image']}"
                 if krea_reference_key != expected_key:
@@ -175,8 +178,9 @@ class PromptManager:
                 ref_conditioning = clip.encode_from_tokens_scheduled(clip.tokenize(positive_text))
                 validate_krea2_conditioning(ref_conditioning)
                 model_output, _rf_reference, _debug = Krea2StyleTransfer().patch(
-                    model, reference_latent, ref_conditioning, "recommended", 1.0, 0.65, 1.0, 1.06,
-                    "flowturbo_pc", 0.5, 2.5, 1.04, 0.0, 1.0, 1.10, 0.85, "7-27"
+                    model, reference_latent, ref_conditioning, "custom", 1.0, 0.65, 1.0,
+                    reference_settings["ref_k_strength"], "flowturbo_pc", 0.5, 2.5, 1.04, 0.0, 1.0,
+                    reference_settings["low_scale_end"], 0.85, "7-27"
                 )
             except ValueError:
                 raise

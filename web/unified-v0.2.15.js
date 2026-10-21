@@ -1,16 +1,16 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.14/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.14/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.14/prompt/index.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.14/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.14/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.14/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.14/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.14/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.15/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.15/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.15/prompt/index.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.15/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.15/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.15/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.15/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.15/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.14/lora/manager.css", "./unified-v0.2.14/style.css", "./unified-v0.2.14/image-editor.css", "./unified-v0.2.14/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.15/lora/manager.css", "./unified-v0.2.15/style.css", "./unified-v0.2.15/image-editor.css", "./unified-v0.2.15/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();

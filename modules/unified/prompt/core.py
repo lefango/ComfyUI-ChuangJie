@@ -5,6 +5,27 @@ import re
 
 MAX_JSON = 2 * 1024 * 1024
 EMPTY_CONFIG = '{"schema":1,"presets":[]}'
+KREA_STYLE_REFERENCE_DEFAULT = {"low_scale_end": 1.1, "ref_k_strength": 1.1}
+
+
+def krea_style_reference(value=None):
+    if value is None:
+        value = {}
+    if not isinstance(value, dict):
+        raise Invalid("无效 Krea2 风格参考强度配置")
+    result = {}
+    for name, minimum, maximum in (
+        ("low_scale_end", -4.0, 8.0),
+        ("ref_k_strength", 0.0, 5.0),
+    ):
+        number = value.get(name, KREA_STYLE_REFERENCE_DEFAULT[name])
+        if isinstance(number, bool) or not isinstance(number, (int, float)):
+            raise Invalid(f"{name} 必须是数字")
+        number = float(number)
+        if not math.isfinite(number) or not minimum <= number <= maximum:
+            raise Invalid(f"{name} 必须在 {minimum} 到 {maximum} 之间")
+        result[name] = number
+    return result
 
 
 class Invalid(ValueError):
@@ -81,7 +102,9 @@ def config(value=EMPTY_CONFIG):
     if value.get("style_order") not in ("user", "style", "krea"):
         raise Invalid("无效风格拼接方式")
     return {"schema": 2, "presets": result, "styles": normalized, "style_enabled": value["style_enabled"],
-            "style_order": "style" if value["style_order"] == "krea" else value["style_order"], "multi_select": value["multi_select"]}
+            "style_order": "style" if value["style_order"] == "krea" else value["style_order"],
+            "multi_select": value["multi_select"],
+            "krea_style_reference": krea_style_reference(value.get("krea_style_reference"))}
 
 
 def split_terms(value):

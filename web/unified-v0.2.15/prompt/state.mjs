@@ -1,4 +1,5 @@
-export const emptyConfig = () => ({ schema: 2, presets: [], styles: [], style_enabled: false, style_order: "user", multi_select: false });
+export const emptyConfig = () => ({ schema: 2, presets: [], styles: [], style_enabled: false, style_order: "user", multi_select: false,
+    krea_style_reference: { low_scale_end: 1.1, ref_k_strength: 1.1 } });
 export function parseConfig(raw) {
     const value = JSON.parse(raw);
     if (!value || ![1, 2].includes(value.schema) || !Array.isArray(value.presets) || value.presets.length > 256) throw Error("无效配置，原文已保留");
@@ -21,6 +22,14 @@ export function parseConfig(raw) {
     }
     const result = structuredClone(value);
     if (result.style_order === "krea") result.style_order = "style";
+    const strengths = result.krea_style_reference ?? {};
+    if (!strengths || typeof strengths !== "object" || Array.isArray(strengths)) throw Error("无效 Krea2 风格参考强度配置，原文已保留");
+    const lowScaleEnd = strengths.low_scale_end ?? 1.1;
+    const refKStrength = strengths.ref_k_strength ?? 1.1;
+    if (typeof lowScaleEnd !== "number" || !Number.isFinite(lowScaleEnd) || lowScaleEnd < -4 || lowScaleEnd > 8 ||
+        typeof refKStrength !== "number" || !Number.isFinite(refKStrength) || refKStrength < 0 || refKStrength > 5)
+        throw Error("Krea2 风格参考强度超出范围，原文已保留");
+    result.krea_style_reference = { low_scale_end: lowScaleEnd, ref_k_strength: refKStrength };
     return result;
 }
 export function applyStyle(config, style, sync = false) {
