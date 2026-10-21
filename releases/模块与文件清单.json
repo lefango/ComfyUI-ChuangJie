@@ -434,9 +434,9 @@
     },
     {
       "path": "modules/unified/prompt/vendor/krea2_style_transfer.py",
-      "sha256": "2a3b4e8ee56ce43e83b7a0c44840ac13eabe7eaa27b4e2e1cb9f3d0d49c803d2",
+      "sha256": "76f4020c7f6f04411b945ad41c6dbfdc6e5bc47273cd5da3ff6311513d449ac1",
       "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/krea2_style_transfer.py",
-      "source_sha256": "2a3b4e8ee56ce43e83b7a0c44840ac13eabe7eaa27b4e2e1cb9f3d0d49c803d2",
+      "source_sha256": "76f4020c7f6f04411b945ad41c6dbfdc6e5bc47273cd5da3ff6311513d449ac1",
       "transform": "copy"
     },
     {

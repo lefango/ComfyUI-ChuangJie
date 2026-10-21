@@ -1987,6 +1987,18 @@ def _model_identity(
     patcher = getattr(base_model, "current_patcher", None)
     if patcher is None:
         return None, None
+    current_hooks = getattr(patcher, "current_hooks", None)
+    if current_hooks is not None:
+        hook_list = getattr(current_hooks, "hooks", None)
+        if hook_list is None:
+            return None, None
+        try:
+            if len(hook_list) > 0:
+                # ComfyUI applies WeightHooks in-place without changing patches_uuid;
+                # hook/keyframe state therefore cannot safely share an RF schedule.
+                return None, None
+        except Exception:
+            return None, None
     patches_uuid = getattr(patcher, "patches_uuid", None)
     patcher_model = getattr(patcher, "model", None)
     if not patches_uuid or patcher_model is None:

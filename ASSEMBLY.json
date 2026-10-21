@@ -105,9 +105,9 @@
     },
     {
       "path": "README.md",
-      "sha256": "fed64675f30631e228586406b84311bef666f9a9f4d998448e1bbdf1ab7072c7",
+      "sha256": "6ea720d97fa8ff099c8692ed26081262ee8e8f9fec5933bbc731ec5ced1ac3be",
       "source": "主插件/源码/runtime/README.md",
-      "source_sha256": "fed64675f30631e228586406b84311bef666f9a9f4d998448e1bbdf1ab7072c7",
+      "source_sha256": "6ea720d97fa8ff099c8692ed26081262ee8e8f9fec5933bbc731ec5ced1ac3be",
       "transform": "copy"
     },
     {
@@ -434,9 +434,9 @@
     },
     {
       "path": "modules/unified/prompt/vendor/krea2_style_transfer.py",
-      "sha256": "2a3b4e8ee56ce43e83b7a0c44840ac13eabe7eaa27b4e2e1cb9f3d0d49c803d2",
+      "sha256": "76f4020c7f6f04411b945ad41c6dbfdc6e5bc47273cd5da3ff6311513d449ac1",
       "source": "模块节点/集合控制台节点开发/源码/ComfyUI-Unified-Model-Loader-Test/prompt/vendor/krea2_style_transfer.py",
-      "source_sha256": "2a3b4e8ee56ce43e83b7a0c44840ac13eabe7eaa27b4e2e1cb9f3d0d49c803d2",
+      "source_sha256": "76f4020c7f6f04411b945ad41c6dbfdc6e5bc47273cd5da3ff6311513d449ac1",
       "transform": "copy"
     },
     {
