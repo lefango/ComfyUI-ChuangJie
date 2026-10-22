@@ -7,6 +7,7 @@ import re
 import time
 from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT,
                    MAX_STYLE_COVER_BYTES, MAX_STYLE_COVER_DATA_URL_CHARS,
+                   MAX_STYLE_COVER_EDGE, MAX_STYLE_COVER_PIXELS,
                    merge, merge_selected, config as parse_config)
 
 LATENT_MAX_RESOLUTION = 16384
@@ -225,16 +226,20 @@ def load_reference_image(value):
     from PIL import Image
 
     with Image.open(io.BytesIO(encoded)) as cover:
+        source_width, source_height = int(cover.width), int(cover.height)
+        cover.thumbnail((MAX_STYLE_COVER_EDGE, MAX_STYLE_COVER_EDGE), Image.Resampling.LANCZOS)
         cover.load()
         width, height = int(cover.width), int(cover.height)
-        if width > 8192 or height > 8192 or width * height > 16_000_000:
-            raise ValueError("主风格封面尺寸过大")
+        if width > MAX_STYLE_COVER_EDGE or height > MAX_STYLE_COVER_EDGE or width * height > MAX_STYLE_COVER_PIXELS:
+            raise ValueError("主风格封面缩放后仍超过 4K 尺寸")
         pixels = np.asarray(cover.convert("RGB"), dtype=np.float32) / 255.0
     image = torch.from_numpy(pixels).unsqueeze(0)
     logging.info(
-        "[Krea2 风格参考] 封面解码 elapsed_ms=%.1f bytes=%d size=%dx%d",
+        "[Krea2 风格参考] 封面解码 elapsed_ms=%.1f bytes=%d source_size=%dx%d size=%dx%d",
         (time.perf_counter() - started) * 1000.0,
         len(encoded),
+        source_width,
+        source_height,
         width,
         height,
     )

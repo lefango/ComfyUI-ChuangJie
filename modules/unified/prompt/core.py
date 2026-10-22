@@ -5,6 +5,8 @@ import re
 
 MAX_JSON = 2 * 1024 * 1024
 MAX_STYLE_COVER_BYTES = 70 * 1024 * 1024
+MAX_STYLE_COVER_EDGE = 4096
+MAX_STYLE_COVER_PIXELS = MAX_STYLE_COVER_EDGE * MAX_STYLE_COVER_EDGE
 MAX_STYLE_COVER_DATA_URL_CHARS = max(
     len(f"data:image/{mime};base64,") for mime in ("png", "jpeg", "webp")
 ) + 4 * ((MAX_STYLE_COVER_BYTES + 2) // 3)

@@ -1,5 +1,6 @@
 import { applyStyle } from "./state.mjs";
 import { el, button, dialog, confirmAction } from "./ui.mjs";
+import { normalizeCoverBlob } from "./cover.mjs";
 
 const TAB_KEY = "prompt-manager.v2.style-tab";
 const PAGE_SIZE = 40;
@@ -209,7 +210,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         const type = el("select"); type.ariaLabel = "文本类型"; type.append(new Option("完整段落（不拆分长描述）", "paragraph"), new Option("逗号词条（参与词条去重）", "tags")); type.value = style?.text_type || "paragraph";
         const cover = el("input"); cover.type = "file"; cover.accept = "image/png,image/jpeg,image/webp"; cover.ariaLabel = "风格封面";
         const typeField = el("label", "pm-field", "文本类型"); typeField.append(type);
-        const coverField = el("label", "pm-field", "封面（可选，不超过 70 MB）"); coverField.append(cover);
+        const coverField = el("label", "pm-field", "封面（可选，长边超过 4096 像素时自动缩小）"); coverField.append(cover);
         editor.body.append(typeField, coverField);
         const feedback = el("div", "pm-error"); feedback.role = "status";
         const initial = JSON.stringify(Object.values(fields).map(f => f.value).concat(type.value));
@@ -220,8 +221,10 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         const submit = button("保存风格", async () => {
             submit.disabled = true;
             try {
-                const file = cover.files[0]; if (file?.size > MAX_STYLE_COVER_BYTES) throw Error("封面不能超过 70 MB");
-                const image = file ? await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(Error("封面读取失败")); r.readAsDataURL(file); }) : undefined;
+                const file = cover.files[0];
+                const normalized = file ? await normalizeCoverBlob(file, MAX_STYLE_COVER_BYTES) : null;
+                if (normalized?.size > MAX_STYLE_COVER_BYTES) throw Error("封面压缩后仍不能超过 70 MB");
+                const image = normalized ? await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(Error("封面读取失败")); r.readAsDataURL(normalized); }) : undefined;
                 await client("style-save", { id: style?.id, revision: style?.revision || 0, english: style?.english || "", theme: style?.theme || "自定义", ...Object.fromEntries(Object.entries(fields).map(([key, input]) => [key, key === "category" ? input.value.trim() || "未分类" : input.value])), text_type: type.value, cover: image });
                 editor.close(); await refresh();
             } catch (e) { feedback.textContent = e.message; }

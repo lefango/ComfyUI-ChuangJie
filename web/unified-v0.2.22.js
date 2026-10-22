@@ -1,16 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.21/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.21/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.21/prompt/index.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.21/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.21/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.21/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.21/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.21/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.22/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.22/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.22/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.22/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.22/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.22/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.22/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.22/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.22/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.21/lora/manager.css", "./unified-v0.2.21/style.css", "./unified-v0.2.21/image-editor.css", "./unified-v0.2.21/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.22/lora/manager.css", "./unified-v0.2.22/style.css", "./unified-v0.2.22/image-editor.css", "./unified-v0.2.22/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -161,8 +162,10 @@ async function prepareQueueData(data) {
         const style = selectedStyle(values.prompt_config);
         if (family === "krea2" && style?.image) {
             const key = String(style.id) + ":" + String(style.revision) + ":" + String(style.image);
-            const cover = await styleCoverRequest(style);
-            if (!(cover instanceof Blob) || cover.size > MAX_STYLE_COVER_BYTES) throw Error("Krea2 主风格封面无效或超过 70 MB");
+            const source = await styleCoverRequest(style);
+            if (!(source instanceof Blob)) throw Error("Krea2 主风格封面无效");
+            const cover = await normalizeCoverBlob(source, MAX_STYLE_COVER_BYTES);
+            if (cover.size > MAX_STYLE_COVER_BYTES) throw Error("Krea2 主风格封面压缩后仍超过 70 MB");
             values.krea_reference_key = key;
             const encodeStarted = performance.now();
             values.krea_reference_data = await blobDataURL(cover);
@@ -174,8 +177,10 @@ async function prepareQueueData(data) {
             values.edit_image_token = pending.token;
             values.edit_has_mask = Boolean(pending.has_mask);
             if (style?.image) {
-                const cover = await styleCoverRequest(style);
-                if (!(cover instanceof Blob) || cover.size > 20 * 1024 * 1024) throw Error("Qwen 风格参考图无效或超过 20 MB");
+                const source = await styleCoverRequest(style);
+                if (!(source instanceof Blob)) throw Error("Qwen 风格参考图无效");
+                const cover = await normalizeCoverBlob(source, 20 * 1024 * 1024);
+                if (cover.size > 20 * 1024 * 1024) throw Error("Qwen 风格参考图压缩后仍超过 20 MB");
                 const encodeStarted = performance.now();
                 values.qwen_reference_data = await blobDataURL(cover);
                 console.debug("[风格参考] 封面 Base64 编码", {elapsedMs:Math.round(performance.now() - encodeStarted), bytes:cover.size});

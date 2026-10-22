@@ -1,11 +1,12 @@
 """Per-user local style library. Execution depends only on workflow snapshots."""
 import base64
 import hashlib
+import io
 import json
 import re
 import uuid
 from pathlib import Path
-from .core import (Invalid, Missing, MAX_STYLE_COVER_BYTES,
+from .core import (Invalid, Missing, MAX_STYLE_COVER_BYTES, MAX_STYLE_COVER_EDGE,
                    MAX_STYLE_COVER_DATA_URL_CHARS, text)
 
 
@@ -21,12 +22,34 @@ def image_bytes(data):
     raise Invalid("封面仅支持 PNG、JPEG 或 WebP 图片")
 
 
+def normalize_cover(data):
+    image_bytes(data)
+    try:
+        from PIL import Image, ImageOps
+        with Image.open(io.BytesIO(data)) as opened:
+            orientation = opened.getexif().get(274, 1)
+            image = ImageOps.exif_transpose(opened)
+            if max(image.size) <= MAX_STYLE_COVER_EDGE and orientation == 1:
+                return data
+            image.thumbnail((MAX_STYLE_COVER_EDGE, MAX_STYLE_COVER_EDGE), Image.Resampling.LANCZOS)
+            output = io.BytesIO()
+            image.convert("RGB").save(output, format="JPEG", quality=94, optimize=True)
+            normalized = output.getvalue()
+        image_bytes(normalized)
+        return normalized
+    except Invalid:
+        raise
+    except Exception as exc:
+        raise Invalid("封面图片读取或缩放失败") from exc
+
+
 class Styles:
     def __init__(self, store):
         self.store = store
         self.covers = store.root / "style-covers"
 
     def cover(self, data):
+        data = normalize_cover(data)
         ext = image_bytes(data)
         key = hashlib.sha256(data).hexdigest() + "." + ext
         self.covers.mkdir(parents=True, exist_ok=True)
@@ -145,7 +168,7 @@ class Styles:
             image = root / "thumbs" / thumb
             if thumb and not image.resolve().is_relative_to((root / "thumbs").resolve()):
                 raise Invalid("缩略图不能位于风格目录之外")
-            data = image.read_bytes() if thumb and image.is_file() and image.stat().st_size <= 1024 * 1024 else None
+            data = image.read_bytes() if thumb and image.is_file() and image.stat().st_size <= MAX_STYLE_COVER_BYTES else None
             if data:
                 try:
                     image_bytes(data)
