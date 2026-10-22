@@ -210,7 +210,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         const type = el("select"); type.ariaLabel = "文本类型"; type.append(new Option("完整段落（不拆分长描述）", "paragraph"), new Option("逗号词条（参与词条去重）", "tags")); type.value = style?.text_type || "paragraph";
         const cover = el("input"); cover.type = "file"; cover.accept = "image/png,image/jpeg,image/webp"; cover.ariaLabel = "风格封面";
         const typeField = el("label", "pm-field", "文本类型"); typeField.append(type);
-        const coverField = el("label", "pm-field", "封面（可选，长边超过 4096 像素时自动缩小）"); coverField.append(cover);
+        const coverField = el("label", "pm-field", "封面（可选，限 70 MB；长边超过 4096 像素时自动缩小）"); coverField.append(cover);
         editor.body.append(typeField, coverField);
         const feedback = el("div", "pm-error"); feedback.role = "status";
         const initial = JSON.stringify(Object.values(fields).map(f => f.value).concat(type.value));

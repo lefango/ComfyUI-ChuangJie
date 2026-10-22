@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.24/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.24/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.24/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.24/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.24/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.24/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.24/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.24/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.24/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.25/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.25/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.25/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.25/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.25/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.25/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.25/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.25/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.25/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.24/lora/manager.css", "./unified-v0.2.24/style.css", "./unified-v0.2.24/image-editor.css", "./unified-v0.2.24/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.25/lora/manager.css", "./unified-v0.2.25/style.css", "./unified-v0.2.25/image-editor.css", "./unified-v0.2.25/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -453,7 +453,7 @@ class Preview {
         const heading = el("h3", "", title), body = el("div", "um-output-body");
         const image = el("img", "um-output-image"); image.alt = title; image.hidden = true;
         const hint = el("div", "um-output-hint", placeholder); body.append(image,hint); parent.append(heading,body);
-        this[key + "Image"] = image; this[key + "Hint"] = hint; this[key + "URL"] = "";
+        this[key + "Image"] = image; this[key + "Hint"] = hint; this[key + "URL"] = ""; this[key + "Heading"] = heading;
     }
     error(message) { this.element.classList.add("um-has-error"); this.status.textContent=message;this.status.classList.add("um-error"); }
     openManager() {
@@ -595,7 +595,7 @@ class Preview {
         const samplerNodeId=[...(this.tasks||[])].find(([,suffix])=>suffix==="ksampler")?.[0];
         const samplePreviewNodeId=[...(this.tasks||[])].find(([,suffix])=>suffix==="sample-preview")?.[0];
         if(!samplerNodeId||!samplerPreviewBelongsToNode(detail,{samplerNodeId,samplePreviewNodeId,jobId:this.activePromptId}))return false;
-        this.setPreviewURL("sample",URL.createObjectURL(detail.blob));
+        this.setPreviewURL("sample",URL.createObjectURL(detail.blob),true);
         return true;
     }
     async handleExecuting(detail) {
@@ -611,15 +611,19 @@ class Preview {
     }
     handleLegacyPreview(blob) {
         if(!(blob instanceof Blob)||!this.activePromptId||this.legacySamplerPromptId!==String(this.activePromptId))return false;
-        this.setPreviewURL("sample",URL.createObjectURL(blob));
+        this.setPreviewURL("sample",URL.createObjectURL(blob),true);
         return true;
     }
     finishPrompt(promptId) {
         if(String(this.activePromptId)===String(promptId)){this.activePromptId="";this.legacySamplerPromptId="";}
     }
-    setPreviewURL(kind,url) {
+    setPreviewURL(kind,url,live=false) {
         const previous=this.consolePreviewURLs[kind];
         const target=this[kind+"Image"],hint=this[kind+"Hint"];
+        if(kind==="sample"&&this.sampleHeading){
+            this.sampleHeading.textContent=live?"实时采样预览（潜空间估算）":"采样结果预览";
+            this.sampleImage.alt=this.sampleHeading.textContent;
+        }
         target.src=url;target.hidden=false;hint.hidden=true;this.consolePreviewURLs[kind]=url;
         this.syncingConsole=true;try{this.consoleUI?.setState({previews:{[kind]:url}});}finally{this.syncingConsole=false;}
         if(previous&&previous!==url&&String(previous).startsWith("blob:"))URL.revokeObjectURL(previous);
@@ -677,7 +681,7 @@ api.addEventListener("executed",event=>{const detail=event.detail||{},id=detail.
 api.addEventListener("execution_cached",event=>{const detail=event.detail||{};if(detail.prompt_id&&Array.isArray(detail.nodes))cachedRuns.set(detail.prompt_id,detail.nodes.map(String));if(cachedRuns.size>32)cachedRuns.delete(cachedRuns.keys().next().value);});
 api.addEventListener("execution_success",async event=>{
     const id=event.detail?.prompt_id;if(!id)return;cachedRuns.delete(id);
-    try{const response=await api.fetchApi("/history/"+encodeURIComponent(id));if(!response.ok)return;const record=(await response.json())[id];if(!record?.outputs)return;for(const ref of live){const preview=ref.deref();if(preview&&!preview.removed){preview.updateHistory(record.outputs);preview.finishPrompt(id);if(!preview.status.classList.contains("um-error"))preview.status.textContent="生成完成";}}}catch{/* Keep the last preview if history is unavailable. */}
+    try{const response=await api.fetchApi("/history/"+encodeURIComponent(id));if(!response.ok)return;const record=(await response.json())[id];if(!record?.outputs)return;for(const ref of live){const preview=ref.deref();if(preview&&!preview.removed&&historyBelongsToActivePrompt(id,preview.activePromptId)){preview.updateHistory(record.outputs);preview.finishPrompt(id);if(!preview.status.classList.contains("um-error"))preview.status.textContent="生成完成";}}}catch{/* Keep the last preview if history is unavailable. */}
 });
 api.addEventListener("execution_error",event=>{const detail=event.detail||{},id=String(detail.node_id??detail.node??"");for(const ref of live){const preview=ref.deref();if(preview&&!preview.removed&&(preview.tasks?.has(id)||id===String(preview.node.id)))preview.error(detail.exception_message||detail.message||"内部任务失败，请查看后端日志");}});
 app.registerExtension({

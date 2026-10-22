@@ -2647,8 +2647,8 @@ class Krea2StyleTransfer:
         "style_strength": 1.0,
         "value_adain_strength": 0.65,
         "ref_value_mix": 1.0,
-        "ref_k_strength": 1.06,
-        "rf_mode": "flowturbo_pc",
+        "ref_k_strength": 0.0,
+        "rf_mode": "rf_gamma",
         "gamma": 0.5,
         "beta": 2.5,
         "high_scale_start": 1.04,
@@ -2703,17 +2703,17 @@ class Krea2StyleTransfer:
                 "ref_k_strength": (
                     "FLOAT",
                     {
-                        "default": 1.06,
+                        "default": 0.0,
                         "min": 0.0,
                         "max": 5.0,
                         "step": 0.01,
                         "advanced": True,
-                        "tooltip": "Direct multiplier for reference K. Higher values make the target attend to the reference branch more strongly.",
+                        "tooltip": "Direct multiplier for reference K. 0 reduces spatial content copying; higher values make the target attend to the reference branch more strongly.",
                     },
                 ),
                 "rf_mode": (
-                    ["flowturbo_pc", "rf_gamma", "rf_gamma_rk2", "linear"],
-                    {"default": "flowturbo_pc", "advanced": True},
+                    ["rf_gamma", "flowturbo_pc", "rf_gamma_rk2", "linear"],
+                    {"default": "rf_gamma", "advanced": True},
                 ),
                 "gamma": (
                     "FLOAT",

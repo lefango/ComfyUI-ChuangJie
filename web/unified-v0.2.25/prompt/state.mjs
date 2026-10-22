@@ -1,5 +1,5 @@
 export const emptyConfig = () => ({ schema: 2, presets: [], styles: [], style_enabled: false, style_order: "user", multi_select: false,
-    krea_style_reference: { low_scale_end: 1.1, ref_k_strength: 1.1 } });
+    krea_style_reference: { low_scale_end: 1.1, ref_k_strength: 0, rf_mode: "rf_gamma" } });
 export function parseConfig(raw) {
     const value = JSON.parse(raw);
     if (!value || ![1, 2].includes(value.schema) || !Array.isArray(value.presets) || value.presets.length > 256) throw Error("无效配置，原文已保留");
@@ -25,11 +25,14 @@ export function parseConfig(raw) {
     const strengths = result.krea_style_reference ?? {};
     if (!strengths || typeof strengths !== "object" || Array.isArray(strengths)) throw Error("无效 Krea2 风格参考强度配置，原文已保留");
     const lowScaleEnd = strengths.low_scale_end ?? 1.1;
-    const refKStrength = strengths.ref_k_strength ?? 1.1;
+    let refKStrength = strengths.ref_k_strength ?? 0;
+    const rfMode = strengths.rf_mode ?? "rf_gamma";
     if (typeof lowScaleEnd !== "number" || !Number.isFinite(lowScaleEnd) || lowScaleEnd < -4 || lowScaleEnd > 8 ||
         typeof refKStrength !== "number" || !Number.isFinite(refKStrength) || refKStrength < 0 || refKStrength > 5)
         throw Error("Krea2 风格参考强度超出范围，原文已保留");
-    result.krea_style_reference = { low_scale_end: lowScaleEnd, ref_k_strength: refKStrength };
+    if (!Object.hasOwn(strengths, "rf_mode") && refKStrength === 1.1) refKStrength = 0;
+    if (!["rf_gamma", "flowturbo_pc"].includes(rfMode)) throw Error("Krea2 参考计算模式无效，原文已保留");
+    result.krea_style_reference = { low_scale_end: lowScaleEnd, ref_k_strength: refKStrength, rf_mode: rfMode };
     return result;
 }
 export function applyStyle(config, style, sync = false) {

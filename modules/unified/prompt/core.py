@@ -12,7 +12,7 @@ MAX_STYLE_COVER_DATA_URL_CHARS = max(
 ) + 4 * ((MAX_STYLE_COVER_BYTES + 2) // 3)
 MAX_STYLE_SAVE_JSON = 95 * 1024 * 1024
 EMPTY_CONFIG = '{"schema":1,"presets":[]}'
-KREA_STYLE_REFERENCE_DEFAULT = {"low_scale_end": 1.1, "ref_k_strength": 1.1}
+KREA_STYLE_REFERENCE_DEFAULT = {"low_scale_end": 1.1, "ref_k_strength": 0.0, "rf_mode": "rf_gamma"}
 
 
 def krea_style_reference(value=None):
@@ -32,6 +32,12 @@ def krea_style_reference(value=None):
         if not math.isfinite(number) or not minimum <= number <= maximum:
             raise Invalid(f"{name} 必须在 {minimum} 到 {maximum} 之间")
         result[name] = number
+    if "rf_mode" not in value and result["ref_k_strength"] == 1.1:
+        result["ref_k_strength"] = 0.0
+    rf_mode = value.get("rf_mode", KREA_STYLE_REFERENCE_DEFAULT["rf_mode"])
+    if rf_mode not in ("rf_gamma", "flowturbo_pc"):
+        raise Invalid("rf_mode 必须是 rf_gamma 或 flowturbo_pc")
+    result["rf_mode"] = rf_mode
     return result
 
 

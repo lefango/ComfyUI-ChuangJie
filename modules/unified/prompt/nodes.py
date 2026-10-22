@@ -179,7 +179,7 @@ class PromptManager:
                 validate_krea2_conditioning(ref_conditioning)
                 model_output, _rf_reference, _debug = Krea2StyleTransfer().patch(
                     model, reference_latent, ref_conditioning, "custom", 1.0, 0.65, 1.0,
-                    reference_settings["ref_k_strength"], "flowturbo_pc", 0.5, 2.5, 1.04, 0.0, 1.0,
+                    reference_settings["ref_k_strength"], reference_settings["rf_mode"], 0.5, 2.5, 1.04, 0.0, 1.0,
                     reference_settings["low_scale_end"], 0.85, "7-27"
                 )
             except ValueError:

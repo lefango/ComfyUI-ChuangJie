@@ -11,6 +11,10 @@ export function withLivePreviewOptions(options = {}) {
   };
 }
 
+export function historyBelongsToActivePrompt(promptId, activePromptId) {
+  return promptId != null && activePromptId != null && String(promptId) === String(activePromptId);
+}
+
 export function samplerPreviewBelongsToNode(detail, { samplerNodeId, samplePreviewNodeId, jobId } = {}) {
   if (!detail || samplerNodeId == null || jobId == null || !(detail.blob instanceof Blob)) return false;
   if (detail.jobId == null || String(detail.jobId) !== String(jobId)) return false;

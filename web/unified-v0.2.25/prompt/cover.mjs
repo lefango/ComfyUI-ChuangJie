@@ -23,7 +23,7 @@ export async function normalizeCoverBlob(blob, maxBytes = 70 * 1024 * 1024) {
             if (quality > 0.72) quality = Math.max(0.72, quality - 0.05);
             else scale *= 0.9;
         }
-        throw Error("封面压缩后仍超过允许大小");
+        throw Error(`封面压缩后仍超过 ${maxBytes / (1024 * 1024)} MB`);
     } finally {
         bitmap.close();
     }

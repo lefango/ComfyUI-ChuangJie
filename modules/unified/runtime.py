@@ -93,7 +93,8 @@ def _krea_style_selected(prompt_config):
     except (ValueError, RecursionError):
         return False
     styles = config.get("styles") if isinstance(config, dict) else None
-    return bool(isinstance(styles, list) and styles and isinstance(styles[0], dict) and styles[0].get("image"))
+    return bool(config.get("style_enabled") is True and isinstance(styles, list) and styles
+                and isinstance(styles[0], dict) and styles[0].get("image"))
 
 
 def compile_prompt(data):
