@@ -246,6 +246,16 @@ def compile_prompt(data):
                     ) if part)} if source_inputs.get("positive_extra") or (state["lora"]["enabled"] and triggers(state["lora"]["entries"])) else {}),
                     **({"negative_extra": source_inputs["negative_extra"]} if "negative_extra" in source_inputs else {}),
                 })
+                if krea_enabled and "model" in demanded:
+                    model_index = next(
+                        (i for i, output in enumerate(output_ports) if output["id"] == "model"),
+                        None,
+                    )
+                    if model_index is not None:
+                        # Expose the same Krea style-patched MODEL used by the
+                        # first sampler so an external second KSampler can
+                        # continue using the selected visual reference.
+                        replacements[(str(mid), model_index)] = [prompt_task, 4]
                 qwen_task = None
                 if qwen_edit_enabled:
                     qwen_inputs = {"clip": refs["clip"], "vae": refs["vae"],

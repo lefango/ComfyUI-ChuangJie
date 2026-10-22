@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.22/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.22/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.22/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.22/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.22/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.22/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.22/collection-console-adapter.mjs";
-import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.22/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.22/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.23/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.23/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.23/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.23/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.23/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.23/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.23/collection-console-adapter.mjs";
+import {samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.23/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.23/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.22/lora/manager.css", "./unified-v0.2.22/style.css", "./unified-v0.2.22/image-editor.css", "./unified-v0.2.22/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.23/lora/manager.css", "./unified-v0.2.23/style.css", "./unified-v0.2.23/image-editor.css", "./unified-v0.2.23/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
