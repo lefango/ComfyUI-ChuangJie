@@ -295,6 +295,34 @@ def _latent_samples(latent: Any, name: str) -> torch.Tensor:
     return value
 
 
+def _resize_reference_latent(reference: torch.Tensor, target_hw: Tuple[int, int]) -> torch.Tensor:
+    """Match a reference latent to the active sampler's spatial grid."""
+    if not torch.is_tensor(reference) or reference.ndim not in (4, 5):
+        raise ValueError("reference latent must be BCHW or BCTHW samples.")
+    target_h, target_w = (int(size) for size in target_hw)
+    if target_h <= 0 or target_w <= 0:
+        raise ValueError(f"target latent dimensions must be positive, got {(target_h, target_w)}.")
+    if tuple(reference.shape[-2:]) == (target_h, target_w):
+        return reference
+
+    reference_dtype = reference.dtype
+    if reference.ndim == 5:
+        batch, channels, frames, height, width = reference.shape
+        samples = reference.permute(0, 2, 1, 3, 4).reshape(batch * frames, channels, height, width)
+    else:
+        samples = reference
+
+    resized = torch.nn.functional.interpolate(
+        samples.to(dtype=torch.float32),
+        size=(target_h, target_w),
+        mode="bilinear",
+        align_corners=False,
+    ).to(dtype=reference_dtype)
+    if reference.ndim == 5:
+        resized = resized.reshape(batch, frames, channels, target_h, target_w).permute(0, 2, 1, 3, 4)
+    return resized
+
+
 def _latent_width_height(latent: Any) -> Tuple[int, int]:
     samples = _latent_samples(latent, "target_latent")
     return int(samples.shape[-1] * 8), int(samples.shape[-2] * 8)
@@ -2944,9 +2972,11 @@ class Krea2StyleTransfer:
             )
 
             def build_rf_context_key():
-                ref_for_build = _repeat_to_batch(
-                    ref_clean.to(device=input_x.device, dtype=rf_dtype), target_b
+                ref_for_build = _resize_reference_latent(
+                    ref_clean.to(device=input_x.device, dtype=rf_dtype),
+                    tuple(int(size) for size in input_x.shape[-2:]),
                 )
+                ref_for_build = _repeat_to_batch(ref_for_build, target_b)
                 rf_kwargs = _build_rf_conditioning_kwargs(c, ref_conditioning, target_b)
                 cache_identity = _rf_cache_key(
                     apply_model,
