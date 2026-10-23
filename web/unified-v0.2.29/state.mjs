@@ -40,6 +40,26 @@ export function modelFamily(s) {
     const identify=value=>{const normalized=String(value||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");if(aliases[normalized])return aliases[normalized];for(const [pattern,family]of patterns)if(pattern.test(normalized))return family;return null;};
     return identify(model.architecture)||identify(`${model.name||""} ${model.files?.[0]||""}`);
 }
+export function alignMossDimensions(width,height) {
+    const align=value=>{
+        const number=Number(value);
+        return Number.isFinite(number)?Math.max(16,Math.floor(number/16)*16):value;
+    };
+    return {width:align(width),height:align(height)};
+}
+export function normalizeMossDimensionWidgets(node) {
+    const widgets=node?.widgets||[];
+    const width=widgets.find(widget=>widget.name==="latent_width");
+    const height=widgets.find(widget=>widget.name==="latent_height");
+    const aligned=alignMossDimensions(width?.value??1024,height?.value??1024);
+    let changed=false;
+    for(const [widget,value] of [[width,aligned.width],[height,aligned.height]]){
+        if(!widget||!Number.isFinite(Number(value))||Number(widget.value)===value)continue;
+        widget.value=value;widget.callback?.(value);changed=true;
+    }
+    if(changed)node.graph?.change();
+    return changed;
+}
 export function mossSamplerConfig(raw) {
     const isString=typeof raw==="string";
     let value=raw;

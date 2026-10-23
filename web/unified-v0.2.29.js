@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.28/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.28/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.28/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.28/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.28/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.28/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.28/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.28/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.28/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.29/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.29/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.29/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.29/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.29/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.29/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.29/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.29/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.29/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.28/lora/manager.css", "./unified-v0.2.28/style.css", "./unified-v0.2.28/image-editor.css", "./unified-v0.2.28/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.29/lora/manager.css", "./unified-v0.2.29/style.css", "./unified-v0.2.29/image-editor.css", "./unified-v0.2.29/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -652,12 +652,19 @@ class Preview {
     update(force=false,restoring=false) {
         for(const widget of this.node.widgets||[]){if(widget===this.widget)continue;widget.hidden=true;widget.options??={};widget.options.hidden=true;if(widget.inputEl){widget.inputEl.style.display="none";widget.inputEl.readOnly=true;}}
         const config=this.node.widgets?.find(widget=>widget.name==="config"),raw=config?.value||JSON.stringify(emptyState());
+        let state;
+        try {
+            state=parseState(raw);
+            if(modelFamily(state)==="moss_image"){
+                normalizeMossDimensionWidgets(this.node);
+            }
+        } catch(error){this.error(error.message);return;}
         const snapshot=JSON.stringify([raw,this.widgetValue("positive",""),this.widgetValue("negative",""),this.widgetValue("prompt_config",""),this.widgetValue("latent_width",1024),this.widgetValue("latent_height",1024),this.widgetValue("latent_batch_size",1),this.widgetValue("sampling_config","")]);
         const size=this.node.size||[0,0],minWidth=1360,minHeight=this.height+80;
         if(size[0]<minWidth||size[1]<minHeight)this.node.setSize?.([Math.max(size[0],minWidth),Math.max(size[1],minHeight)]);
         if(!force&&snapshot===this.last)return;this.last=snapshot;
         try {
-            const state=parseState(raw);syncPorts(this.node,state,restoring);this.status.textContent="";this.status.classList.remove("um-error");this.element.classList.remove("um-has-error");this.refreshTasks();this.element.title=summary(state);this.modelName.textContent=state.modules.model.name||"尚未选择主模型";
+            syncPorts(this.node,state,restoring);this.status.textContent="";this.status.classList.remove("um-error");this.element.classList.remove("um-has-error");this.refreshTasks();this.element.title=summary(state);this.modelName.textContent=state.modules.model.name||"尚未选择主模型";
             const cover=state.cover||state.modules.model.cover,scope=state.cover?"":"/models";this.modelCover.replaceChildren();
             if(cover){const image=el("img");image.src=client.imageURL(scope,cover);image.alt=state.name||state.modules.model.name||"模型预设封面";image.addEventListener("error",()=>{image.remove();this.modelCover.textContent="封面不可用";});this.modelCover.append(image);}else this.modelCover.textContent="尚未选择模型";
             if(state.generation.edit_image_id!==this.imageForId)this.loadSelectedImage();
