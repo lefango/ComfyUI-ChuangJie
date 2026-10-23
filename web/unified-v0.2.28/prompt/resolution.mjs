@@ -14,15 +14,24 @@ export const RATIOS = [
 ];
 const MAX_SIZE = 16384;
 
-export function largestSizeForRatio(widthRatio, heightRatio) {
+function alignedDown(value, multiple) {
+    return Math.max(multiple, Math.floor(value / multiple) * multiple);
+}
+
+function validateMultiple(multiple) {
+    if (!Number.isInteger(multiple) || multiple < 8) throw new RangeError("尺寸步幅须为不小于 8 的整数");
+}
+
+export function largestSizeForRatio(widthRatio, heightRatio, multiple = 8) {
     const w = Number(widthRatio), h = Number(heightRatio);
     if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1 || w > 1000 || h > 1000)
         throw new RangeError("自定义比例须为 1 到 1000 之间的整数");
+    validateMultiple(multiple);
     const square = w === h;
     const maxWidth = square || w < h ? 1080 : 1920;
     const maxHeight = square || w > h ? 1080 : 1920;
     const scale = Math.min(maxWidth / w, maxHeight / h);
-    return { width: Math.floor(w * scale / 8) * 8, height: Math.floor(h * scale / 8) * 8 };
+    return { width: alignedDown(w * scale, multiple), height: alignedDown(h * scale, multiple) };
 }
 
 export function ratioShapeDimensions(widthRatio, heightRatio, maxWidth = 42, maxHeight = 54) {
@@ -30,13 +39,13 @@ export function ratioShapeDimensions(widthRatio, heightRatio, maxWidth = 42, max
     return { width: Math.min(maxWidth, widthRatio * scale), height: Math.min(maxHeight, heightRatio * scale) };
 }
 
-export function dimensionsForRatio(widthRatio, heightRatio, longEdge) {
+export function dimensionsForRatio(widthRatio, heightRatio, longEdge, multiple = 8) {
     const w = Number(widthRatio), h = Number(heightRatio), edge = Number(longEdge);
     if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1 || w > 1000 || h > 1000 ||
         !Number.isInteger(edge) || edge < 16 || edge > MAX_SIZE) throw Error("自定义比例或长边尺寸无效");
+    validateMultiple(multiple);
     const scale = edge / Math.max(w, h);
-    return { width: Math.max(16, Math.floor(w * scale / 8) * 8),
-        height: Math.max(16, Math.floor(h * scale / 8) * 8) };
+    return { width: alignedDown(w * scale, multiple), height: alignedDown(h * scale, multiple) };
 }
 
 function ratioFor(width, height) {
@@ -50,14 +59,15 @@ function integer(value, label, min, max) {
     return number;
 }
 
-export function openResolutionSelector(getSettings, setSettings) {
+export function openResolutionSelector(getSettings, setSettings, multiple = 8) {
+    validateMultiple(multiple);
     const current = getSettings();
     const d = dialog("分辨率选择"); d.panel.classList.add("pm-resolution-dialog");
-    d.body.append(el("p", "pm-muted", "选择画幅比例后自动匹配最大尺寸；也可自定义比例、宽高和批次数。"));
+    d.body.append(el("p", "pm-muted", `选择画幅比例后自动匹配最大尺寸；宽高按 ${multiple} 像素步幅对齐，也可自定义比例、宽高和批次数。`));
     const grid = el("div", "pm-ratio-grid");
     const custom = el("section", "pm-resolution-custom");
     const width = el("input"), height = el("input"), batch = el("input");
-    for (const input of [width, height]) { input.type = "number"; input.min = "16"; input.max = String(MAX_SIZE); input.step = "8"; }
+    for (const input of [width, height]) { input.type = "number"; input.min = "16"; input.max = String(MAX_SIZE); input.step = String(multiple); }
     batch.type = "number"; batch.min = "1"; batch.max = "4096"; batch.step = "1";
     width.value = String(current.width); height.value = String(current.height); batch.value = String(current.batchSize);
     width.ariaLabel = "latent 宽度"; height.ariaLabel = "latent 高度"; batch.ariaLabel = "latent 批量数";
@@ -80,7 +90,7 @@ export function openResolutionSelector(getSettings, setSettings) {
         for (const card of grid.querySelectorAll(".pm-ratio-card")) card.setAttribute("aria-pressed", String(card.dataset.ratio === selectedRatio));
     }
     function chooseRatio(item) {
-        const size = largestSizeForRatio(item.w, item.h);
+        const size = largestSizeForRatio(item.w, item.h, multiple);
         setSize(size.width, size.height, item.id);
     }
     for (const item of RATIOS) {
@@ -89,7 +99,7 @@ export function openResolutionSelector(getSettings, setSettings) {
         shape.style.width = `${shapeSize.width}px`; shape.style.height = `${shapeSize.height}px`;
         shape.style.aspectRatio = `${item.w} / ${item.h}`;
         card.ariaLabel = `比例 ${item.id}，${item.title}`;
-        const size = largestSizeForRatio(item.w, item.h);
+        const size = largestSizeForRatio(item.w, item.h, multiple);
         card.append(shape, el("strong", "", item.id), el("span", "pm-ratio-orientation", item.title),
             el("small", "", `${size.width} × ${size.height}`));
         grid.append(card);
@@ -104,7 +114,7 @@ export function openResolutionSelector(getSettings, setSettings) {
     const ratioHLabel = el("label", "pm-field", "比例高"); ratioHLabel.append(ratioHInput);
     ratioFields.append(ratioWLabel, ratioHLabel);
     const applyRatio = button("应用自定义比例", () => {
-        const size = largestSizeForRatio(ratioWInput.value, ratioHInput.value);
+        const size = largestSizeForRatio(ratioWInput.value, ratioHInput.value, multiple);
         setSize(size.width, size.height, "custom");
     });
     custom.append(customTitle, ratioFields, applyRatio);
@@ -126,7 +136,7 @@ export function openResolutionSelector(getSettings, setSettings) {
         try {
             const w = integer(width.value, "宽度", 16, MAX_SIZE), h = integer(height.value, "高度", 16, MAX_SIZE);
             const count = integer(batch.value, "批量数", 1, 4096);
-            if (w % 8 || h % 8) throw Error("宽度和高度需为 8 的倍数；请调整自定义数值。");
+            if (w % multiple || h % multiple) throw Error(`宽度和高度需为 ${multiple} 的倍数；请调整自定义数值。`);
             setSettings({ width: w, height: h, batchSize: count }); d.close();
         } catch (e) { error.textContent = e.message; }
     }));

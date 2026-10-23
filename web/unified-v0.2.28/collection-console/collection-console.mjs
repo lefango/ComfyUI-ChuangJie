@@ -21,6 +21,22 @@ export const RESOLUTION_PRESETS = [
   { width: 1080, height: 1920, ratio: "9:16", label: "全高清竖屏" },
 ];
 
+export function resolutionStepForFamily(family) {
+  return family === "moss_image" ? 16 : 8;
+}
+
+export function alignResolution(width, height, family) {
+  const multiple = resolutionStepForFamily(family);
+  const align = value => {
+    const number = Number(value);
+    const bounded = Math.max(64, Math.min(8192, Math.round(Number.isFinite(number) ? number : 1024)));
+    return Math.max(64, family === "moss_image"
+      ? Math.floor(bounded / multiple) * multiple
+      : Math.round(bounded / multiple) * multiple);
+  };
+  return { width: align(width), height: align(height) };
+}
+
 const DEFAULT_CATALOG = {
   models: [
     { id: "krea2", name: "Krea 2", family: "krea2", category: "图像编辑", cover: "" },
@@ -755,6 +771,7 @@ export function mountCollectionConsole(container, options = {}) {
   }
 
   function renderResolutionPanel() {
+    const multiple = resolutionStepForFamily(draft.model.family);
     const layout = createElement("div", "cc-resolution-layout");
     const ratios = createPanelSection("画面比例", "选择比例后，可继续微调宽高。");
     const ratioGrid = createElement("div", "cc-ratio-grid");
@@ -768,21 +785,22 @@ export function mountCollectionConsole(container, options = {}) {
     const common = createPanelSection("常用尺寸", "按常见画幅比例准备的起始分辨率。");
     const presetGrid = createElement("div", "cc-resolution-presets");
     for (const preset of RESOLUTION_PRESETS) {
-      const isSelected = preset.width === draft.resolution.width && preset.height === draft.resolution.height;
+      const size = alignResolution(preset.width, preset.height, draft.model.family);
+      const isSelected = size.width === draft.resolution.width && size.height === draft.resolution.height;
       const button = createButton("", "select-resolution", `cc-resolution-preset${isSelected ? " cc-selected" : ""}`, {
-        width: String(preset.width), height: String(preset.height), ratio: preset.ratio,
+        width: String(size.width), height: String(size.height), ratio: preset.ratio,
       });
-      button.append(createElement("strong", "", `${preset.width} × ${preset.height}`));
+      button.append(createElement("strong", "", `${size.width} × ${size.height}`));
       button.append(createElement("span", "", `${preset.ratio} · ${preset.label}`));
       presetGrid.append(button);
     }
     common.append(presetGrid);
     const custom = createPanelSection("自定义尺寸");
     const fields = createElement("div", "cc-dimension-fields");
-    const widthInput = createTextInput(draft.resolution.width, { type: "number", min: "64", max: "8192", step: "8", inputmode: "numeric", "data-draft": "resolution.width", "aria-label": "图像宽度" });
-    const heightInput = createTextInput(draft.resolution.height, { type: "number", min: "64", max: "8192", step: "8", inputmode: "numeric", "data-draft": "resolution.height", "aria-label": "图像高度" });
+    const widthInput = createTextInput(draft.resolution.width, { type: "number", min: "64", max: "8192", step: String(multiple), inputmode: "numeric", "data-draft": "resolution.width", "aria-label": "图像宽度" });
+    const heightInput = createTextInput(draft.resolution.height, { type: "number", min: "64", max: "8192", step: String(multiple), inputmode: "numeric", "data-draft": "resolution.height", "aria-label": "图像高度" });
     fields.append(createField("宽度（px）", widthInput), createElement("span", "cc-dimension-times", "×"), createField("高度（px）", heightInput));
-    custom.append(fields, createElement("p", "cc-help-text", "应用时按 8 像素取整，适配常见潜空间尺寸。"));
+    custom.append(fields, createElement("p", "cc-help-text", `应用时按 ${multiple} 像素对齐，适配当前模型的 latent 尺寸。`));
     layout.append(ratios, common, custom);
     return layout;
   }
@@ -1138,10 +1156,8 @@ export function mountCollectionConsole(container, options = {}) {
 
   function normalizeDraft() {
     const normalized = cloneState(draft);
-    const rawWidth = Number(normalized.resolution.width);
-    const rawHeight = Number(normalized.resolution.height);
-    normalized.resolution.width = Math.max(64, Math.min(8192, Math.round((Number.isFinite(rawWidth) ? rawWidth : 1024) / 8) * 8));
-    normalized.resolution.height = Math.max(64, Math.min(8192, Math.round((Number.isFinite(rawHeight) ? rawHeight : 1024) / 8) * 8));
+    normalized.resolution = { ...normalized.resolution,
+      ...alignResolution(normalized.resolution.width, normalized.resolution.height, normalized.model.family) };
     normalized.resolution.ratio = chooseRatio(normalized.resolution.width, normalized.resolution.height);
     const maxSeed = 9007199254740991n;
     let seed = String(normalized.sampler.seed).replace(/\D/g, "").replace(/^0+(?=\d)/, "") || "0";
@@ -1294,12 +1310,13 @@ export function mountCollectionConsole(container, options = {}) {
     if (action === "select-ratio") {
       const preset = RESOLUTION_PRESETS.find((item) => item.ratio === button.dataset.ratio);
       if (preset) {
-        draft.resolution = { ...draft.resolution, width: preset.width, height: preset.height, ratio: preset.ratio };
+        const size = alignResolution(preset.width, preset.height, draft.model.family);
+        draft.resolution = { ...draft.resolution, ...size, ratio: preset.ratio };
         renderDialogFromChange();
       }
     }
     if (action === "select-resolution") {
-      draft.resolution = { width: Number(button.dataset.width), height: Number(button.dataset.height), ratio: button.dataset.ratio };
+      draft.resolution = { ...alignResolution(button.dataset.width, button.dataset.height, draft.model.family), ratio: button.dataset.ratio };
       renderDialogFromChange();
     }
     if (action === "model-tab") {

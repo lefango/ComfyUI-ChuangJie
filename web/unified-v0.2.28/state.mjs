@@ -35,10 +35,24 @@ export async function digest(s) {
 }
 export function modelFamily(s) {
     const model=s.modules.model;
-    const aliases={sd1:"stable_diffusion",sd15:"stable_diffusion",sd2:"stable_diffusion",sdxl:"stable_diffusion",stable_diffusion:"stable_diffusion",sd3:"sd3",flux:"flux",flux2:"flux2",krea2:"krea2",lumina2:"lumina2",z_image:"lumina2",zimage:"lumina2",qwen_image:"qwen_image",wan:"wan",hidream:"hidream",chroma:"chroma",hunyuan_video:"hunyuan_video"};
-    const patterns=[[/(?:^|_)krea_?2(?:_|$)/,"krea2"],[/(?:^|_)flux_?2(?:_|$)/,"flux2"],[/(?:^|_)qwen_?image(?:_|$)/,"qwen_image"],[/(?:^|_)(?:lumina_?2|z_?image)(?:_|$)/,"lumina2"],[/(?:^|_)(?:sdxl|stable_diffusion_xl|stable_diffusion_v[12]|sd_?1_?5|sd_?2)(?:_|$)/,"stable_diffusion"],[/(?:^|_)sd_?3(?:_|$)/,"sd3"],[/(?:^|_)flux(?:_|$)/,"flux"],[/(?:^|_)wan(?:2[12])?(?:_|$)/,"wan"],[/(?:^|_)hidream(?:_|$)/,"hidream"],[/(?:^|_)chroma(?:_|$)/,"chroma"],[/(?:^|_)hunyuan_video(?:_|$)/,"hunyuan_video"]];
+    const aliases={sd1:"stable_diffusion",sd15:"stable_diffusion",sd2:"stable_diffusion",sdxl:"stable_diffusion",stable_diffusion:"stable_diffusion",sd3:"sd3",moss_image:"moss_image",flux:"flux",flux2:"flux2",krea2:"krea2",lumina2:"lumina2",z_image:"lumina2",zimage:"lumina2",qwen_image:"qwen_image",wan:"wan",hidream:"hidream",chroma:"chroma",hunyuan_video:"hunyuan_video"};
+    const patterns=[[/^(?:[^_]+_)*moss_?image(?:_|$)/,"moss_image"],[/(?:^|_)krea_?2(?:_|$)/,"krea2"],[/(?:^|_)flux_?2(?:_|$)/,"flux2"],[/(?:^|_)qwen_?image(?:_|$)/,"qwen_image"],[/(?:^|_)(?:lumina_?2|z_?image)(?:_|$)/,"lumina2"],[/(?:^|_)(?:sdxl|stable_diffusion_xl|stable_diffusion_v[12]|sd_?1_?5|sd_?2)(?:_|$)/,"stable_diffusion"],[/(?:^|_)sd_?3(?:_|$)/,"sd3"],[/(?:^|_)flux(?:_|$)/,"flux"],[/(?:^|_)wan(?:2[12])?(?:_|$)/,"wan"],[/(?:^|_)hidream(?:_|$)/,"hidream"],[/(?:^|_)chroma(?:_|$)/,"chroma"],[/(?:^|_)hunyuan_video(?:_|$)/,"hunyuan_video"]];
     const identify=value=>{const normalized=String(value||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");if(aliases[normalized])return aliases[normalized];for(const [pattern,family]of patterns)if(pattern.test(normalized))return family;return null;};
     return identify(model.architecture)||identify(`${model.name||""} ${model.files?.[0]||""}`);
+}
+export function mossSamplerConfig(raw) {
+    const isString=typeof raw==="string";
+    let value=raw;
+    if(isString){try{value=JSON.parse(raw);}catch{return raw;}}
+    if(!value||typeof value!=="object"||Array.isArray(value))return raw;
+    const defaults={seed:0,steps:20,cfg:7,sampler_name:"euler",scheduler:"normal",denoise:1,control_after_generate:"randomize"};
+    const current={...defaults,...value};
+    if(["steps","cfg","sampler_name","scheduler","denoise"].some(key=>current[key]!==defaults[key]))return raw;
+    const next={...current,steps:25,cfg:2.5,sampler_name:"er_sde",scheduler:"simple"};
+    return isString?JSON.stringify(next):next;
+}
+export function samplerConfigForFamily(raw,family) {
+    return family==="moss_image"?mossSamplerConfig(raw):raw;
 }
 export function qwenImage21EditCapable(s) {
     const model=s?.modules?.model||s||{};

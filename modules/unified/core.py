@@ -6,7 +6,7 @@ import re
 from .model.core import Invalid, options, filename, cover_key, text
 from .lora.core import state as lora_state
 
-VERSION = "0.2.27"
+VERSION = "0.2.28"
 EDIT_MIN_DIMENSION = 16
 MANAGER = "CJUnifiedModelLoaderTest"
 ASSET = "CJUnifiedAssetTest"
@@ -156,6 +156,7 @@ def clip_purpose(state):
         return {"type": None, "source": "", "message": "无法自动识别：请先启用并选择内部主模型，或手动选择 CLIP 用途。"}
     aliases = {"sd1": "stable_diffusion", "sd15": "stable_diffusion", "sd2": "stable_diffusion",
                "sdxl": "stable_diffusion", "stable_diffusion": "stable_diffusion", "sd3": "sd3",
+               "moss_image": "moss_image",
                "flux": "flux", "flux2": "flux2", "krea2": "krea2", "lumina2": "lumina2",
                "z_image": "lumina2", "zimage": "lumina2", "qwen_image": "qwen_image",
                "wan": "wan", "hidream": "hidream", "chroma": "chroma", "hunyuan_video": "hunyuan_video"}
@@ -164,7 +165,7 @@ def clip_purpose(state):
         if normalized in aliases:
             return aliases[normalized]
         # Specific families precede broad ones, e.g. flux2 must never become flux.
-        for pattern, result in ((r"krea_?2", "krea2"), (r"flux_?2", "flux2"),
+        for pattern, result in ((r"moss_?image", "moss_image"), (r"krea_?2", "krea2"), (r"flux_?2", "flux2"),
                                 (r"qwen_?image", "qwen_image"), (r"lumina_?2|z_?image", "lumina2"),
                                 (r"sdxl|stable_diffusion_xl|stable_diffusion_v[12]|sd_?1_?5|sd_?2", "stable_diffusion"),
                                 (r"sd_?3", "sd3"), (r"flux", "flux"), (r"wan(?:2[12])?", "wan"),
@@ -185,6 +186,7 @@ def model_family(state):
     model = state["modules"]["model"]
     aliases = {"sd1": "stable_diffusion", "sd15": "stable_diffusion", "sd2": "stable_diffusion",
                "sdxl": "stable_diffusion", "stable_diffusion": "stable_diffusion", "sd3": "sd3",
+               "moss_image": "moss_image",
                "flux": "flux", "flux2": "flux2", "krea2": "krea2", "lumina2": "lumina2",
                "z_image": "lumina2", "zimage": "lumina2", "qwen_image": "qwen_image",
                "wan": "wan", "hidream": "hidream", "chroma": "chroma", "hunyuan_video": "hunyuan_video"}
@@ -193,7 +195,7 @@ def model_family(state):
         normalized = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
         if normalized in aliases:
             return aliases[normalized]
-        patterns = ((r"krea_?2", "krea2"), (r"flux_?2", "flux2"),
+        patterns = ((r"moss_?image", "moss_image"), (r"krea_?2", "krea2"), (r"flux_?2", "flux2"),
                     (r"qwen_?image", "qwen_image"), (r"lumina_?2|z_?image", "lumina2"),
                     (r"sdxl|stable_diffusion_xl|stable_diffusion_v[12]|sd_?1_?5|sd_?2", "stable_diffusion"),
                     (r"sd_?3", "sd3"), (r"flux", "flux"), (r"wan(?:2[12])?", "wan"),

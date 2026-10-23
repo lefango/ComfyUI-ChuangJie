@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.27/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.27/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.27/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.27/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.27/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.27/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.27/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.27/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.27/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.28/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.28/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.28/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.28/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.28/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.28/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.28/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.28/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.28/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.27/lora/manager.css", "./unified-v0.2.27/style.css", "./unified-v0.2.27/image-editor.css", "./unified-v0.2.27/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.28/lora/manager.css", "./unified-v0.2.28/style.css", "./unified-v0.2.28/image-editor.css", "./unified-v0.2.28/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -326,6 +326,16 @@ class Preview {
             previews:{...this.consolePreviewURLs},
         };
     }
+    restoreSamplerProfile() {
+        let state;
+        try { state=parseState(this.widgetValue("config",JSON.stringify(emptyState()))); } catch { return false; }
+        const sampler=this.node.widgets?.find(widget=>widget.name==="sampling_config");
+        if(!sampler||typeof sampler.value!=="string")return false;
+        const next=samplerConfigForFamily(sampler.value,modelFamily(state));
+        if(typeof next!=="string"||next===sampler.value)return false;
+        sampler.value=next;sampler.callback?.(next);this.node.graph?.change();
+        return true;
+    }
     syncConsole(state=parseState(this.widgetValue("config", JSON.stringify(emptyState())))) {
         if(!this.consoleUI)return;
         this.syncingConsole=true;
@@ -338,7 +348,7 @@ class Preview {
         if(route==="model-manager")this.openManager();
         else if(route==="style-manager")this.promptView.openStyleManager();
         else if(route==="prompt-manager")this.promptView.openPromptManager();
-        else if(route==="resolution-selector")this.promptView.openResolutionManager();
+        else if(route==="resolution-selector")this.promptView.openResolutionManager(modelFamily(parseState(this.widgetValue("config",JSON.stringify(emptyState()))))==="moss_image"?16:8);
         else if(route==="sampler-settings")this.openSamplerSettings();
         else if(route==="image-library")this.openImageLibrary();
         return true;
@@ -454,7 +464,11 @@ class Preview {
         const lost=connections(this.node).filter(link=>!outputIDs.has(link.id)).map(link=>this.node.outputs[link.index].label||link.id);
         for(const port of this.node.inputs||[])if(["model","clip","vae"].includes(port.name)&&port.link!=null&&!inputIDs.has(port.name))lost.push("外部输入："+(port.label||port.name));
         if(lost.length&&!await confirmDialog("应用后将断开以下连线：\n"+lost.join("\n"),"确认功能切换与断线"))return false;
-        this.node.graph?.beforeChange(); const config=this.node.widgets.find(widget=>widget.name==="config");config.value=JSON.stringify(state);config.callback?.(config.value);this.update(true);this.node.graph?.afterChange();this.node.graph?.change();return true;
+        const sampler=this.node.widgets?.find(widget=>widget.name==="sampling_config");
+        const mossSampler=modelFamily(state)==="moss_image"&&sampler?mossSamplerConfig(sampler.value):null;
+        this.node.graph?.beforeChange(); const config=this.node.widgets.find(widget=>widget.name==="config");config.value=JSON.stringify(state);config.callback?.(config.value);
+        if(sampler&&typeof mossSampler==="string"&&mossSampler!==sampler.value){sampler.value=mossSampler;sampler.callback?.(mossSampler);}
+        this.update(true);this.node.graph?.afterChange();this.node.graph?.change();return true;
     }
     writeWidget(name,value) {
         const widget=this.node.widgets?.find(item=>item.name===name);if(!widget)return;
@@ -686,6 +700,11 @@ app.registerExtension({
     },
     loadedGraphNode(node){
         if(INTERNAL_CLASSES.has(node.comfyClass)){localized(node);return;}
-        if(node.comfyClass==="CJUnifiedModelLoaderTest"){localized(node);previews.get(node)?.update(true,true);}
+        if(node.comfyClass==="CJUnifiedModelLoaderTest"){
+            localized(node);
+            const preview=previews.get(node);
+            preview?.restoreSamplerProfile();
+            preview?.update(true,true);
+        }
     }
 });

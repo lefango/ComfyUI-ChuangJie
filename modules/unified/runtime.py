@@ -18,6 +18,7 @@ from .lora.core import state as lora_state, triggers
 EMPTY_PROMPT_CONFIG = '{"schema":2,"presets":[],"styles":[],"style_enabled":false,"style_order":"user","multi_select":false}'
 EMPTY_SAMPLER_CONFIG = '{"seed":0,"steps":20,"cfg":7,"sampler_name":"euler","scheduler":"normal","denoise":1,"control_after_generate":"randomize"}'
 MAX_SEED = (1 << 53) - 1
+MOSS_SAMPLER_PROFILE = {"steps": 25, "cfg": 2.5, "sampler_name": "er_sde", "scheduler": "simple"}
 
 
 def task_id(manager, suffix):
@@ -34,7 +35,7 @@ def _number(value, label, minimum, maximum, integer=False):
     return float(value)
 
 
-def sampler_settings(raw):
+def sampler_settings(raw, family=None):
     if isinstance(raw, str):
         if len(raw.encode("utf-8")) > 64 * 1024:
             raise Invalid("K 采样器设置过大")
@@ -46,6 +47,9 @@ def sampler_settings(raw):
         raise Invalid("K 采样器设置无效")
     defaults = json.loads(EMPTY_SAMPLER_CONFIG)
     value = dict(defaults, **raw)
+    if family == "moss_image" and all(value.get(key) == defaults[key] for key in
+                                       ("steps", "cfg", "sampler_name", "scheduler", "denoise")):
+        value.update(MOSS_SAMPLER_PROFILE)
     seed = _number(value.get("seed"), "种子", 0, MAX_SEED, integer=True)
     steps = _number(value.get("steps"), "步数", 1, 1000, integer=True)
     cfg = _number(value.get("cfg"), "CFG", 0, 100)
@@ -75,14 +79,27 @@ def sampler_settings(raw):
             "scheduler": scheduler, "denoise": denoise}
 
 
-def _dimensions(width, height, label="latent"):
+def _dimensions(width, height, label="latent", multiple=8):
     result = []
     for name, value in (("宽度", width), ("高度", height)):
         value = _number(value, f"{label}{name}", 16, 16384, integer=True)
-        if value % 8:
-            raise Invalid(f"{label}{name}需为 8 的倍数")
+        if value % multiple:
+            raise Invalid(f"{label}{name}需为 {multiple} 的倍数")
         result.append(value)
     return result[0], result[1]
+
+
+def moss_core_support_error():
+    try:
+        import comfy.sd
+        import nodes as comfy_nodes
+    except (ImportError, AttributeError):
+        return "当前 ComfyUI 核心缺少原生 MOSS-Image 支持（CLIP 用途 moss_image）；请更新 ComfyUI 核心并重启。"
+    if getattr(getattr(comfy.sd, "CLIPType", None), "MOSS_IMAGE", None) is None:
+        return "当前 ComfyUI 核心缺少 MOSS-Image CLIP 用途 moss_image；请更新 ComfyUI 核心并重启。"
+    if "EmptyFlux2LatentImage" not in getattr(comfy_nodes, "NODE_CLASS_MAPPINGS", {}):
+        return "当前 ComfyUI 核心缺少 FLUX.2 空 latent 节点 EmptyFlux2LatentImage；请更新 ComfyUI 核心并重启。"
+    return ""
 
 
 def compile_prompt(data):
@@ -122,11 +139,21 @@ def compile_prompt(data):
             generation = state["generation"]
             generation_outputs = {"image", "positive_conditioning", "negative_conditioning", "latent"}
             should_generate = generation["enabled"] or bool(generation_outputs & demanded)
+            family = model_family(state)
             if should_generate:
                 for key in ("model", "clip", "vae"):
                     if state["modules"][key]["source"] == "off":
                         raise Invalid(f"一体出图需要启用 {key.upper()} 模块")
                     demanded.add(key)
+
+            if should_generate and family == "moss_image":
+                if state["modules"]["clip"]["source"] == "internal":
+                    purpose = clip_purpose(state)
+                    if purpose["type"] != "moss_image":
+                        raise Invalid("MOSS-Image 内部出图要求内部 CLIP 用途为 moss_image。请将用途设为“自动”，或选择“moss_image”，避免编码维度不匹配。")
+                support_error = moss_core_support_error()
+                if support_error:
+                    raise Invalid(support_error)
 
             for key in ("model", "clip", "vae"):
                 if key not in demanded:
@@ -165,7 +192,7 @@ def compile_prompt(data):
                     replacements[(str(mid), index)] = refs[output["id"]]
 
             if should_generate:
-                settings = sampler_settings(source_inputs.get("sampling_config", EMPTY_SAMPLER_CONFIG))
+                settings = sampler_settings(source_inputs.get("sampling_config", EMPTY_SAMPLER_CONFIG), family)
                 width = source_inputs.get("latent_width", 1024)
                 height = source_inputs.get("latent_height", 1024)
                 batch_size = source_inputs.get("latent_batch_size", 1)
@@ -202,10 +229,11 @@ def compile_prompt(data):
                     if has_mask:
                         edit_mask_enabled = True
                 else:
-                    width, height = _dimensions(width, height)
+                    width, height = _dimensions(width, height, multiple=16 if family == "moss_image" else 8)
                     if type(batch_size) is not int or not 1 <= batch_size <= 4096:
                         raise Invalid("latent 批量数须为 1 到 4096 之间")
-                    empty_task = add("empty-latent", "EmptyLatentImage", {
+                    latent_node = "EmptyFlux2LatentImage" if family == "moss_image" else "EmptyLatentImage"
+                    empty_task = add("empty-latent", latent_node, {
                         "width": width, "height": height, "batch_size": batch_size})
                     latent_ref = [empty_task, 0]
 

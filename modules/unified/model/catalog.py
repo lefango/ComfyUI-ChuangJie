@@ -3,6 +3,7 @@ import hashlib
 import json
 import struct
 import os
+import re
 from pathlib import Path
 from .core import Invalid, filename, LABELS
 
@@ -108,12 +109,17 @@ class Catalog:
                 metadata = head.get("__metadata__", {})
                 keys = " ".join(k.lower() for k in head if k != "__metadata__")
                 explicit = str(metadata.get("modelspec.architecture", metadata.get("architecture", ""))).lower()
-                for label, tests in [("flux2", ("flux2", "flux.2", "double_stream_modulation_img.")), ("flux", ("flux", "double_blocks.", "double_stream_blocks.")),
-                                     ("sdxl", ("sdxl", "conditioner.embedders.1.")), ("sd3", ("sd3", "joint_blocks.")),
-                                     ("wan", ("wan",)), ("qwen_image", ("qwen_image",)), ("stable_diffusion", ("stable-diffusion-v1", "stable-diffusion-v2"))]:
-                    if any(t in (explicit + " " + keys) for t in tests):
-                        result.update(architecture=label, confidence="较高", source="文件头结构／元数据")
-                        break
+                normalized_header = re.sub(r"[^a-z0-9]+", "_", explicit + " " + keys).strip("_")
+                moss_signature = {"shared_block_modulation.weight", "layers.0.proj.ffn_up_gate.weight"}.issubset(head)
+                if "moss_image" in normalized_header or moss_signature:
+                    result.update(architecture="moss_image", confidence="较高", source="文件头结构／元数据")
+                else:
+                    for label, tests in [("flux2", ("flux2", "flux.2", "double_stream_modulation_img.")), ("flux", ("flux", "double_blocks.", "double_stream_blocks.")),
+                                         ("sdxl", ("sdxl", "conditioner.embedders.1.")), ("sd3", ("sd3", "joint_blocks.")),
+                                         ("wan", ("wan",)), ("qwen_image", ("qwen_image",)), ("stable_diffusion", ("stable-diffusion-v1", "stable-diffusion-v2"))]:
+                        if any(t in (explicit + " " + keys) for t in tests):
+                            result.update(architecture=label, confidence="较高", source="文件头结构／元数据")
+                            break
             elif path.suffix.lower() == ".gguf":
                 from gguf import GGUFReader
                 reader = GGUFReader(str(path))
@@ -137,7 +143,12 @@ class Catalog:
             result["source"] = f"文件头读取失败：{exc}"
         if not result["architecture"]:
             lower = path.stem.lower()
+            normalized_name = re.sub(r"[^a-z0-9]+", "_", lower).strip("_")
+            if "moss_image" in normalized_name:
+                result.update(architecture="moss_image", confidence="低", source="文件名推测，请人工确认")
             for value in ("flux2", "sdxl", "sd3", "qwen_image", "flux", "wan"):
+                if result["architecture"]:
+                    break
                 if value in lower:
                     result.update(architecture=value, confidence="低", source="文件名推测，请人工确认")
                     break

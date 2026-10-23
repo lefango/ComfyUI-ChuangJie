@@ -41,7 +41,7 @@ export class PromptView {
     setConfig(value) { this.write("prompt_config", JSON.stringify(value)); this.update(); }
     openPromptManager() { return openManager(this.client, () => this.config(), value => this.setConfig(value)); }
     openStyleManager() { return openStyles(this.client, () => this.config(), value => this.setConfig(value)); }
-    openResolutionManager() { return openResolutionSelector(() => this.resolution(), value => this.setResolution(value)); }
+    openResolutionManager(multiple = 8) { return openResolutionSelector(() => this.resolution(), value => this.setResolution(value), multiple); }
     write(name, value) {
         const widget = this.native(name); widget.value = value; widget.callback?.(value);
         this.node.graph?.change(); this.node.setDirtyCanvas?.(true, true);
