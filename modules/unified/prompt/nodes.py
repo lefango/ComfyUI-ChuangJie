@@ -1,14 +1,6 @@
 import hashlib
 import json
-import base64
-import io
-import logging
-import re
-import time
-from .core import (EMPTY_CONFIG, KREA_STYLE_REFERENCE_DEFAULT,
-                   MAX_STYLE_COVER_BYTES, MAX_STYLE_COVER_DATA_URL_CHARS,
-                   MAX_STYLE_COVER_EDGE, MAX_STYLE_COVER_PIXELS,
-                   merge, merge_selected, config as parse_config)
+from .core import EMPTY_CONFIG, merge, merge_selected
 
 LATENT_MAX_RESOLUTION = 16384
 
@@ -33,44 +25,19 @@ def validate_latent_settings(width, height, batch_size):
         raise ValueError("latent 批量数需在 1 到 4096 之间")
 
 
-def validate_krea2_conditioning(conditioning):
-    try:
-        features = int(conditioning[0][0].shape[-1])
-    except (IndexError, KeyError, AttributeError, TypeError, ValueError):
-        features = None
-    if features != 30720:
-        actual = "无法识别" if features is None else str(features)
-        raise ValueError(
-            f"Krea2 专用模式收到 {actual} 维 CLIP 条件，要求 30720 维。"
-            "请将 CLIPLoader 类型设为 krea2，并确保正负文本编码也使用这个 CLIP。"
-        )
-
-
 def execution_key(positive, negative, config, positive_extra="", negative_extra=""):
     return hashlib.sha256(json.dumps([positive, negative, config, positive_extra, negative_extra], ensure_ascii=False).encode()).hexdigest()
-
-
-def krea_text_config(config_value):
-    snapshot = parse_config(config_value)
-    reference_settings = snapshot.get("krea_style_reference", dict(KREA_STYLE_REFERENCE_DEFAULT))
-    if snapshot.get("schema") != 2 or not snapshot.get("styles"):
-        return None, config_value, reference_settings
-    primary = snapshot["styles"][0]
-    if not primary.get("image"):
-        return None, config_value, reference_settings
-    text_snapshot = dict(snapshot, styles=snapshot["styles"][1:], style_enabled=bool(snapshot["styles"][1:]))
-    return primary, json.dumps(text_snapshot, ensure_ascii=False), reference_settings
 
 
 class PromptManager:
     CATEGORY = "提示词工具"
     FUNCTION = "execute"
     RETURN_TYPES = ("*", "*", "STRING", "STRING", "MODEL", "LATENT")
-    RETURN_NAMES = ("正面输出", "负面输出", "正面文本", "负面文本", "风格参考模型", "空 latent")
+    RETURN_NAMES = ("正面输出", "负面输出", "正面文本", "负面文本", "模型", "空 latent")
     # ComfyUI retains cached UI in history only for output nodes. This also lets
     # users execute this text utility without attaching a temporary sink.
     OUTPUT_NODE = True
-    DESCRIPTION = "融合提示词、预设和风格；输出正负条件/文本、风格参考模型及可选分辨率空 latent。Krea2 模式请连接 krea2 类型 CLIP。"
+    DESCRIPTION = "融合提示词、预设和文字风格；输出正负条件/文本、原模型及可选分辨率空 latent。"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -129,65 +96,21 @@ class PromptManager:
                 latent_width=1024, latent_height=1024, latent_batch_size=1):
         validate_latent_settings(latent_width, latent_height, latent_batch_size)
         latent = make_empty_latent(latent_width, latent_height, latent_batch_size)
-        enabled = bool(krea_enabled)
-        text_config = config
-        primary_style = None
-        reference_settings = dict(KREA_STYLE_REFERENCE_DEFAULT)
-        if enabled:
-            primary_style, text_config, reference_settings = krea_text_config(config)
-            if primary_style:
-                expected_key = f"{primary_style['id']}:{primary_style['revision']}:{primary_style['image']}"
-                if krea_reference_key != expected_key:
-                    raise ValueError("主风格封面尚未同步，请稍后重新执行")
-                if not krea_reference_data:
-                    raise ValueError("主风格封面尚未载入，请重新选择风格")
-                # The primary style supplies the image. Later selected styles supply text.
-        result = merge(positive, negative, text_config, positive_extra, negative_extra)
+        # Keep legacy inputs in the signature so saved workflows still load;
+        # style covers are no longer used as Krea2 generation references.
+        result = merge(positive, negative, config, positive_extra, negative_extra)
         positive_text = result["positive"]["text"]
         negative_text = result["negative"]["text"]
         if self._needs_conditioning(prompt, unique_id):
             if clip is None:
-                if enabled:
-                    raise ValueError("Krea2 专用模式需要 CLIPLoader 类型为 krea2 的 CLIP")
                 raise ValueError("输出连接到条件输入时，请连接 CLIP")
             positive_output = clip.encode_from_tokens_scheduled(clip.tokenize(positive_text))
             negative_output = clip.encode_from_tokens_scheduled(clip.tokenize(negative_text))
-            if enabled:
-                validate_krea2_conditioning(positive_output)
-                validate_krea2_conditioning(negative_output)
         else:
             positive_output, negative_output = positive_text, negative_text
         model_output = model
-        if enabled and primary_style:
-            if model is None or vae is None:
-                raise ValueError("Krea2 专用模式需要连接 Krea2 模型和 VAE")
-            if clip is None:
-                raise ValueError("Krea2 专用模式需要连接 CLIPLoader 类型为 krea2 的 CLIP")
-            try:
-                from .vendor.krea2_style_transfer import Krea2StyleReference, Krea2StyleTransfer
-
-                reference_started = time.perf_counter()
-                image = load_reference_image(krea_reference_data)
-                reference_latent, _preview, _debug = Krea2StyleReference().build(
-                    vae, latent, image, "crop", "lanczos"
-                )
-                logging.info(
-                    "[Krea2 风格参考] 参考图准备 elapsed_ms=%.1f",
-                    (time.perf_counter() - reference_started) * 1000.0,
-                )
-                ref_conditioning = clip.encode_from_tokens_scheduled(clip.tokenize(positive_text))
-                validate_krea2_conditioning(ref_conditioning)
-                model_output, _rf_reference, _debug = Krea2StyleTransfer().patch(
-                    model, reference_latent, ref_conditioning, "custom", 1.0, 0.65, 1.0,
-                    reference_settings["ref_k_strength"], reference_settings["rf_mode"], 0.5, 2.5, 1.04, 0.0, 1.0,
-                    reference_settings["low_scale_end"], 0.85, "7-27"
-                )
-            except ValueError:
-                raise
-            except Exception as exc:
-                raise RuntimeError(f"Krea2 风格参考处理失败：{exc}") from exc
         if text_output_enabled:
-            selected = merge_selected(positive, negative, text_config, positive_extra, negative_extra,
+            selected = merge_selected(positive, negative, config, positive_extra, negative_extra,
                                       user=text_output_user, extra=text_output_extra,
                                       presets=text_output_presets, styles=text_output_styles)
             positive_text_output = selected["positive"]["text"]
@@ -197,50 +120,9 @@ class PromptManager:
         return {"ui": {"prompt_manager": [{"positive": result["positive"]["text"],
                     "negative": result["negative"]["text"],
                     "input_values": {"positive": positive, "negative": negative, "config": config,
-                                     "krea_enabled": enabled,
+                                     "krea_enabled": False,
                                      "text_output_enabled": text_output_enabled,
                                      "text_output_user": text_output_user, "text_output_extra": text_output_extra,
                                      "text_output_presets": text_output_presets, "text_output_styles": text_output_styles},
                     "input_key": execution_key(positive, negative, config, positive_extra, negative_extra)}]},
                 "result": (positive_output, negative_output, positive_text_output, negative_text_output, model_output, latent)}
-
-
-def krea_reference_data_data(value):
-    if not isinstance(value, str) or len(value) > MAX_STYLE_COVER_DATA_URL_CHARS:
-        raise ValueError("主风格封面无效或超过 70 MB，请重新选择风格")
-    match = re.fullmatch(r"data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)", value)
-    if not match:
-        raise ValueError("主风格封面尚未载入或格式不支持")
-    raw = base64.b64decode(match.group(2), validate=True)
-    if len(raw) > MAX_STYLE_COVER_BYTES:
-        raise ValueError("主风格封面超过 70 MB")
-    return raw
-
-
-def load_reference_image(value):
-    """Decode, validate, and log a style cover without exposing its payload."""
-    started = time.perf_counter()
-    encoded = krea_reference_data_data(value)
-    import numpy as np
-    import torch
-    from PIL import Image
-
-    with Image.open(io.BytesIO(encoded)) as cover:
-        source_width, source_height = int(cover.width), int(cover.height)
-        cover.thumbnail((MAX_STYLE_COVER_EDGE, MAX_STYLE_COVER_EDGE), Image.Resampling.LANCZOS)
-        cover.load()
-        width, height = int(cover.width), int(cover.height)
-        if width > MAX_STYLE_COVER_EDGE or height > MAX_STYLE_COVER_EDGE or width * height > MAX_STYLE_COVER_PIXELS:
-            raise ValueError("主风格封面缩放后仍超过 4K 尺寸")
-        pixels = np.asarray(cover.convert("RGB"), dtype=np.float32) / 255.0
-    image = torch.from_numpy(pixels).unsqueeze(0)
-    logging.info(
-        "[Krea2 风格参考] 封面解码 elapsed_ms=%.1f bytes=%d source_size=%dx%d size=%dx%d",
-        (time.perf_counter() - started) * 1000.0,
-        len(encoded),
-        source_width,
-        source_height,
-        width,
-        height,
-    )
-    return image

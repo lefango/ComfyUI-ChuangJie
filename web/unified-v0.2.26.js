@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.25/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,qwenImage21EditCapable} from "./unified-v0.2.25/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.25/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.25/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.25/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.25/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.25/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.25/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.25/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.26/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,qwenImage21EditCapable} from "./unified-v0.2.26/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.26/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.26/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.26/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.26/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.26/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.26/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.26/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.25/lora/manager.css", "./unified-v0.2.25/style.css", "./unified-v0.2.25/image-editor.css", "./unified-v0.2.25/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.26/lora/manager.css", "./unified-v0.2.26/style.css", "./unified-v0.2.26/image-editor.css", "./unified-v0.2.26/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -19,7 +19,6 @@ const live = new Set();
 let sequence = 0;
 let watchTimer = null;
 const TASK_SUFFIXES = ["model", "clip", "vae", "lora-model", "lora-clip", "triggers", "prompt", "empty-latent", "edit-image", "vae-encode", "vae-encode-inpaint", "ksampler", "vae-decode", "sample-preview", "mask-composite", "final-preview"];
-const MAX_STYLE_COVER_BYTES = 70 * 1024 * 1024;
 const INTERNAL_CLASSES = new Set(["CJUnifiedAssetTest", "CJUnifiedLoRATest", "CJUnifiedTriggersTest", "CJUnifiedPromptStageTest", "CJUnifiedEditImageStageTest", "CJUnifiedMaskCompositeStageTest"]);
 const linkAt = (graph, id) => graph?.links?.get?.(id) || graph?.links?.[id] || graph?._links?.get?.(id) || graph?._links?.[id];
 
@@ -154,23 +153,11 @@ async function prepareQueueData(data) {
         const values = node.inputs || {};
         const state = parseState(values.config || JSON.stringify(emptyState()));
         const generate = state.generation.enabled || generationDemanded(prepared.output, id, state);
-        const family = modelFamily(state);
         values.edit_image_token = ""; values.edit_has_mask = false;
         values.krea_reference_key = ""; values.krea_reference_data = "";
         values.qwen_reference_data = "";
         if (!generate) continue;
         const style = selectedStyle(values.prompt_config);
-        if (family === "krea2" && style?.image) {
-            const key = String(style.id) + ":" + String(style.revision) + ":" + String(style.image);
-            const source = await styleCoverRequest(style);
-            if (!(source instanceof Blob)) throw Error("Krea2 主风格封面无效");
-            const cover = await normalizeCoverBlob(source, MAX_STYLE_COVER_BYTES);
-            if (cover.size > MAX_STYLE_COVER_BYTES) throw Error("Krea2 主风格封面压缩后仍超过 70 MB");
-            values.krea_reference_key = key;
-            const encodeStarted = performance.now();
-            values.krea_reference_data = await blobDataURL(cover);
-            console.debug("[风格参考] 封面 Base64 编码", {elapsedMs:Math.round(performance.now() - encodeStarted), bytes:cover.size});
-        }
         const imageId = state.generation.edit_image_id;
         if (imageId && qwenImage21EditCapable(state)) {
             const pending = await imageEditRequest("/image-edit/prepare", jsonPost({id:imageId}));
@@ -656,7 +643,7 @@ class Preview {
         if(size[0]<minWidth||size[1]<minHeight)this.node.setSize?.([Math.max(size[0],minWidth),Math.max(size[1],minHeight)]);
         if(!force&&snapshot===this.last)return;this.last=snapshot;
         try {
-            const state=parseState(raw);syncPorts(this.node,state,restoring);this.status.textContent="";this.status.classList.remove("um-error");this.element.classList.remove("um-has-error");this.refreshTasks();this.promptView.setKreaEligible(modelFamily(state)==="krea2");this.element.title=summary(state);this.modelName.textContent=state.modules.model.name||"尚未选择主模型";
+            const state=parseState(raw);syncPorts(this.node,state,restoring);this.status.textContent="";this.status.classList.remove("um-error");this.element.classList.remove("um-has-error");this.refreshTasks();this.element.title=summary(state);this.modelName.textContent=state.modules.model.name||"尚未选择主模型";
             const cover=state.cover||state.modules.model.cover,scope=state.cover?"":"/models";this.modelCover.replaceChildren();
             if(cover){const image=el("img");image.src=client.imageURL(scope,cover);image.alt=state.name||state.modules.model.name||"模型预设封面";image.addEventListener("error",()=>{image.remove();this.modelCover.textContent="封面不可用";});this.modelCover.append(image);}else this.modelCover.textContent="尚未选择模型";
             if(state.generation.edit_image_id!==this.imageForId)this.loadSelectedImage();

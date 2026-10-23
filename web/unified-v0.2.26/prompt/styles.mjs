@@ -54,7 +54,7 @@ export function renderStyleSummary(parent, getConfig, setConfig, showToggle = tr
     parent.append(details);
 }
 
-export async function openStyles(client, getConfig, setConfig, styleReferenceControls = null) {
+export async function openStyles(client, getConfig, setConfig) {
     const d = dialog("选择风格"); d.panel.classList.add("pm-style-manager");
     const tabs = el("div", "pm-toolbar pm-style-tabs"); tabs.role = "tablist"; tabs.ariaLabel = "风格范围";
     let tab = "all", library = { styles: [], favorites: [] }, query = "", category = "", focusedId = "";
@@ -62,10 +62,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
     try { tab = localStorage.getItem(TAB_KEY) === "favorites" ? "favorites" : "all"; } catch { /* optional browser preference */ }
     const all = button("全部风格", () => switchTab("all")), favorites = button("收藏风格", () => switchTab("favorites"));
     all.role = favorites.role = "tab";
-    const referenceStrength = styleReferenceControls ? button("参考强度", () => switchTab("strength")) : null;
-    if (referenceStrength) referenceStrength.role = "tab";
     tabs.append(all, favorites);
-    if (referenceStrength) tabs.append(referenceStrength);
     const tools = el("div", "pm-toolbar pm-style-toolbar"), search = el("input");
     search.type = "search"; search.placeholder = "搜索中文、英文名称或提示词"; search.ariaLabel = "搜索风格";
     const multi = button("", () => {
@@ -85,9 +82,7 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
     const selected = el("div", "pm-current-styles");
     const catalogPanel = el("div", "pm-style-content");
     catalogPanel.append(el("h2", "pm-style-heading", "风格参考"), tools, maintenance, status, breadcrumb, overview, detailLayout, el("h3", "", "当前节点已选风格"), selected);
-    const strengthPanel = el("section", "pm-style-strength-panel");
-    if (styleReferenceControls) strengthPanel.append(styleReferenceControls);
-    d.body.append(tabs, catalogPanel, strengthPanel);
+    d.body.append(tabs, catalogPanel);
     d.cancel = async () => { if (!activeEditor || await activeEditor.cancel()) { observer?.disconnect(); d.close(); } };
     const observer = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
         if (entries.some(entry => entry.isIntersecting) && renderedCount < visibleItems.length) appendNextPage();
@@ -98,13 +93,8 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
     grid.addEventListener("scroll", onGridScroll, { passive: true });
     search.oninput = () => { query = search.value.trim().toLocaleLowerCase(); render(); };
     function switchTab(value) {
-        if (value === "strength" && (!styleReferenceControls || styleReferenceControls.hidden)) return;
         tab = value;
-        if (value !== "strength") try { localStorage.setItem(TAB_KEY, value); } catch { /* optional browser preference */ }
-        if (value === "strength") {
-            const strength = styleReferenceControls.querySelector(".pm-krea-strength");
-            if (strength?.tagName === "DETAILS") strength.open = true;
-        }
+        try { localStorage.setItem(TAB_KEY, value); } catch { /* optional browser preference */ }
         render();
     }
     async function refresh() {
@@ -236,17 +226,8 @@ export async function openStyles(client, getConfig, setConfig, styleReferenceCon
         activeEditor = editor; fields.name.focus();
     }
     function render() {
-        const referenceStrengthAvailable = Boolean(referenceStrength && styleReferenceControls && !styleReferenceControls.hidden);
-        if (!referenceStrengthAvailable && tab === "strength") tab = "all";
         all.ariaSelected = String(tab === "all"); favorites.ariaSelected = String(tab === "favorites");
         all.classList.toggle("pm-active", tab === "all"); favorites.classList.toggle("pm-active", tab === "favorites");
-        if (referenceStrength) {
-            referenceStrength.hidden = !referenceStrengthAvailable;
-            referenceStrength.ariaSelected = String(tab === "strength");
-            referenceStrength.classList.toggle("pm-active", tab === "strength");
-        }
-        catalogPanel.hidden = tab === "strength";
-        strengthPanel.hidden = tab !== "strength" || !referenceStrengthAvailable;
         const c = getConfig(); multi.textContent = `${c.multi_select ? "多选" : "单选"} ${c.styles.length}/${c.multi_select ? 3 : 1}`;
         const favoriteIds = new Set(library.favorites);
         const scoped = library.styles.filter(s => tab !== "favorites" || favoriteIds.has(s.id));

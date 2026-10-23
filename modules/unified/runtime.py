@@ -85,18 +85,6 @@ def _dimensions(width, height, label="latent"):
     return result[0], result[1]
 
 
-def _krea_style_selected(prompt_config):
-    if not isinstance(prompt_config, str):
-        return False
-    try:
-        config = json.loads(prompt_config)
-    except (ValueError, RecursionError):
-        return False
-    styles = config.get("styles") if isinstance(config, dict) else None
-    return bool(config.get("style_enabled") is True and isinstance(styles, list) and styles
-                and isinstance(styles[0], dict) and styles[0].get("image"))
-
-
 def compile_prompt(data):
     original = data.get("prompt")
     if not isinstance(original, dict):
@@ -222,9 +210,9 @@ def compile_prompt(data):
                     latent_ref = [empty_task, 0]
 
                 prompt_config = source_inputs.get("prompt_config", EMPTY_PROMPT_CONFIG)
-                # Krea2 style-reference processing is automatic when a selected
-                # style has a cover. Text-only styles stay in the normal prompt path.
-                krea_enabled = model_family(state) == "krea2" and _krea_style_selected(prompt_config)
+                # Preserve the legacy input for saved workflows; style-cover
+                # references are disabled and all selected style text remains active.
+                krea_enabled = False
                 prompt_task = add("prompt", PROMPT_STAGE, {
                     "positive": source_inputs.get("positive", ""),
                     "negative": source_inputs.get("negative", ""),
@@ -235,8 +223,8 @@ def compile_prompt(data):
                     "text_output_extra": source_inputs.get("text_output_extra", False),
                     "text_output_presets": source_inputs.get("text_output_presets", False),
                     "text_output_styles": source_inputs.get("text_output_styles", False),
-                    "krea_reference_key": source_inputs.get("krea_reference_key", ""),
-                    "krea_reference_data": source_inputs.get("krea_reference_data", ""),
+                    "krea_reference_key": "",
+                    "krea_reference_data": "",
                     "latent_width": max(16, width),
                     "latent_height": max(16, height),
                     "latent_batch_size": batch_size,
@@ -247,16 +235,6 @@ def compile_prompt(data):
                     ) if part)} if source_inputs.get("positive_extra") or (state["lora"]["enabled"] and triggers(state["lora"]["entries"])) else {}),
                     **({"negative_extra": source_inputs["negative_extra"]} if "negative_extra" in source_inputs else {}),
                 })
-                if krea_enabled and "model" in demanded:
-                    model_index = next(
-                        (i for i, output in enumerate(output_ports) if output["id"] == "model"),
-                        None,
-                    )
-                    if model_index is not None:
-                        # Expose the same Krea style-patched MODEL used by the
-                        # first sampler so an external second KSampler can
-                        # continue using the selected visual reference.
-                        replacements[(str(mid), model_index)] = [prompt_task, 4]
                 qwen_task = None
                 if qwen_edit_enabled:
                     qwen_inputs = {"clip": refs["clip"], "vae": refs["vae"],
@@ -366,7 +344,7 @@ class PromptStage:
     CATEGORY = "创界/临时测试/内部"
     FUNCTION = "execute"
     RETURN_TYPES = ("*", "*", "STRING", "STRING", "MODEL", "LATENT")
-    RETURN_NAMES = ("正面条件", "负面条件", "正面文本", "负面文本", "风格参考模型", "空 latent")
+    RETURN_NAMES = ("正面条件", "负面条件", "正面文本", "负面文本", "模型", "空 latent")
 
     @classmethod
     def INPUT_TYPES(cls):
