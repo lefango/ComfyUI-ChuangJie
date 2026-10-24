@@ -6,7 +6,7 @@ import re
 from .model.core import Invalid, options, filename, cover_key, text
 from .lora.core import state as lora_state
 
-VERSION = "0.2.30"
+VERSION = "0.2.31"
 EDIT_MIN_DIMENSION = 16
 MANAGER = "CJUnifiedModelLoaderTest"
 ASSET = "CJUnifiedAssetTest"
@@ -165,6 +165,7 @@ def ports(state):
         {"id": "positive_conditioning", "type": "CONDITIONING", "label": "正面条件"},
         {"id": "negative_conditioning", "type": "CONDITIONING", "label": "负面条件"},
         {"id": "latent", "type": "LATENT", "label": "潜空间"},
+        {"id": "seed", "type": "INT", "label": "种子"},
     ))
     return result
 

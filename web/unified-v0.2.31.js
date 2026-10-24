@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.30/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.30/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.30/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.30/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.30/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.30/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.30/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.30/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.30/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.31/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.31/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.31/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.31/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.31/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.31/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.31/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.31/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.31/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.30/lora/manager.css", "./unified-v0.2.30/style.css", "./unified-v0.2.30/image-editor.css", "./unified-v0.2.30/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.31/lora/manager.css", "./unified-v0.2.31/style.css", "./unified-v0.2.31/image-editor.css", "./unified-v0.2.31/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -131,7 +131,7 @@ function imageDemanded(output, managerId, state) {
 }
 function generationDemanded(output, managerId, state) {
     const indexes = new Set(outputs(state).flatMap((port, index) =>
-        ["image", "positive_conditioning", "negative_conditioning", "latent"].includes(port.id) ? [index] : []));
+        ["image", "positive_conditioning", "negative_conditioning", "latent", "seed"].includes(port.id) ? [index] : []));
     return Object.values(output || {}).some(node => Object.values(node?.inputs || {}).some(value =>
         Array.isArray(value) && String(value[0]) === String(managerId) && indexes.has(Number(value[1]))));
 }

@@ -2,7 +2,18 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前版本为 **0.5.30**，集成创界集成控制台 **0.2.30** 和创界保存图像 **0.1.1**。MOSS 文生图新增边界框构图编辑器，可用原生布局元素约束画面中对象与文字的位置；它是构图控制，画布背景只作编辑预览，不会作为图像输入或蒙版送入模型。MOSS-Image Base/SFT 基础文生图需使用包含 ComfyUI 原生 MOSS 支持的核心。提示词管理界面与 API 已由创界集成控制台内置；主插件不再注册独立 `PromptManager` 节点。
+当前版本为 **0.5.32**，集成创界集成控制台 **0.2.31** 和创界保存图像 **0.1.2**。本版修复保存图像预览尺寸随节点宽度和图片比例变化的问题。
+
+## 0.5.32 更新
+
+- 保存图像预览按渲染宽度与图片宽高比动态设置高度；Classic 同步更新节点高度，Nodes 2.0 跟随 DOM 尺寸变化。
+- 图片翻页和加载失败时更新预览尺寸，保持完整显示并限制异常极端尺寸；不改变保存、端口或工作流数据。
+
+## 0.5.31 本地更新
+
+- 创界集成控制台增加稳定追加的 INT `种子` 输出，读取首轮内置采样配置实际使用的 seed；旧输出端口顺序保持不变。
+- 连接该端口时控制台仍执行其内部生成，以兼容只接 seed 的工作流；完整实现位于独立模块源码，主插件由 `modules.json` 装配。
+- 本地构建与测试记录仅代表此项目的开发验收，不代表公开发行版。
 
 ## 0.5.30 更新
 
@@ -160,9 +171,9 @@ The prompt node adds separate positive and negative text outputs for downstream 
 
 ## 界面预览 | Interface preview
 
-以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前版本 0.5.30 将模型、LoRA 与提示词管理整合在创界集成控制台中；截图仅供历史参考。
+以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前版本 0.5.32 将模型、LoRA 与提示词管理整合在创界集成控制台中；截图仅供历史参考。
 
-The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. The current local build 0.5.30 integrates model, LoRA and prompt management in the ChuangJie Integrated Console; treat these screenshots as historical references.
+The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.32 integrates model, LoRA and prompt management in the ChuangJie Integrated Console; treat these screenshots as historical references.
 
 **节点入口：在“创界节点”分类下选择管理工具。**
 
@@ -182,7 +193,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [当前公开成品：ComfyUI-ChuangJie-0.5.30.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.30.zip) | 当前成品为 0.5.30；Comfy Registry 索引同步后可通过 Manager 安装或更新。 |
+| **只想安装使用** | [当前成品：ComfyUI-ChuangJie-0.5.32.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.32.zip) | 当前成品为 0.5.32；Comfy Registry 索引同步后可通过 Manager 安装或更新。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
@@ -198,7 +209,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 ## 在 ComfyUI Manager 中安装或更新
 
-在 Manager 搜索 `ComfyUI-ChuangJie`，点安装或更新；如果 Registry 索引尚未刷新，也可以直接下载上方的 0.5.30 ZIP，或在 `ComfyUI/custom_nodes/` 中运行：
+在 Manager 搜索 `ComfyUI-ChuangJie`，点安装或更新；如果 Registry 索引尚未刷新，也可以直接下载上方的 0.5.32 ZIP，或在 `ComfyUI/custom_nodes/` 中运行：
 
 ```bash
 git clone https://github.com/lefango/ComfyUI-ChuangJie.git
@@ -221,7 +232,7 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Latest public build:** Download [ComfyUI-ChuangJie-0.5.30.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.30.zip).
+- **Latest public build:** Download [ComfyUI-ChuangJie-0.5.32.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.32.zip).
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install

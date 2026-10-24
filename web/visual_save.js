@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { calculatePreviewFrameHeight } from "./visual_save/preview-sizing.mjs";
 
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
@@ -36,6 +37,10 @@ class SaveView {
     constructor(node) {
         this.node = node;
         this.index = 0;
+        this.imageSize = null;
+        this.frameHeight = calculatePreviewFrameHeight(320, 0, 0);
+        this.widgetHeight = 540;
+        this.layoutFrame = 0;
         this.element = el("div", "vsi-node");
         isolate(this.element);
         this.path = el("div", "vsi-path");
@@ -49,12 +54,19 @@ class SaveView {
         prefixLabel.append(this.prefix);
         this.status = el("div", "vsi-status", "尚未保存图片"); this.status.role = "status";
         this.frame = el("div", "vsi-frame");
+        this.frame.style.height = `${this.frameHeight}px`;
         this.placeholder = el("span", "vsi-placeholder", "执行节点后，显示已保存的图片");
         this.image = el("img", "vsi-image"); this.image.hidden = true; this.image.alt = "已保存图片预览";
-        this.image.addEventListener("load", () => { this.image.hidden = false; this.placeholder.hidden = true; });
+        this.image.addEventListener("load", () => {
+            this.imageSize = { width: this.image.naturalWidth, height: this.image.naturalHeight };
+            this.image.hidden = false; this.placeholder.hidden = true;
+            this.scheduleLayout();
+        });
         this.image.addEventListener("error", () => {
+            this.imageSize = null;
             this.image.hidden = true; this.placeholder.hidden = false;
             this.placeholder.textContent = "无法加载已保存图片，文件可能已移动或删除";
+            this.scheduleLayout();
         });
         this.frame.append(this.placeholder, this.image);
         this.resolution = el("span", "", "分辨率 —");
@@ -66,16 +78,65 @@ class SaveView {
         this.filename = el("div", "vsi-filename", "文件名：—");
         this.destination = el("div", "vsi-destination");
         this.element.append(el("div", "vsi-label", "保存位置"), this.folderRow, prefixLabel, this.status, this.frame, meta, this.filename, this.destination);
+        this.resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => this.scheduleLayout());
+        this.resizeObserver?.observe(this.element);
         this.widget = node.addDOMWidget("visual_save_ui", "visual-save-image", this.element, {
-            serialize: false, hideOnZoom: false, getMinHeight: () => 470, getHeight: () => 470,
+            serialize: false, hideOnZoom: false,
+            getMinHeight: () => this.widgetHeight,
+            getHeight: () => this.widgetHeight,
+            afterResize: () => this.scheduleLayout(),
             surfaces: { canvas: "shown", vueNode: "shown", panel: "never" },
         });
         this.widget.serialize = false;
         this.timer = setInterval(() => this.sync(), 300);
         const remove = this.widget.onRemove;
-        this.widget.onRemove = () => { clearInterval(this.timer); this.closePicker?.(); remove?.call(this.widget); };
+        this.widget.onRemove = () => {
+            clearInterval(this.timer);
+            this.resizeObserver?.disconnect();
+            if (this.layoutFrame) cancelAnimationFrame(this.layoutFrame);
+            this.closePicker?.(); remove?.call(this.widget);
+        };
         this.sync(); this.select(0);
         folders().then(data => { this.outputRoot = data.output_root; this.sync(); }).catch(error => this.fail(error.message));
+    }
+    measureWidgetHeight() {
+        if (!this.element.isConnected) return 0;
+        const style = getComputedStyle(this.element);
+        const pixels = value => Number.parseFloat(value) || 0;
+        const children = [...this.element.children].filter(child => getComputedStyle(child).display !== "none");
+        const rowGap = pixels(style.rowGap || style.gap);
+        return Math.ceil(
+            pixels(style.paddingTop) + pixels(style.paddingBottom)
+            + pixels(style.borderTopWidth) + pixels(style.borderBottomWidth)
+            + rowGap * Math.max(0, children.length - 1)
+            + children.reduce((height, child) => height + child.offsetHeight, 0),
+        );
+    }
+    scheduleLayout() {
+        if (this.layoutFrame || !this.element.isConnected) return;
+        this.layoutFrame = requestAnimationFrame(() => {
+            this.layoutFrame = 0;
+            const frameWidth = this.frame.clientWidth || this.element.clientWidth;
+            const { width, height } = this.imageSize || {};
+            const nextFrameHeight = calculatePreviewFrameHeight(frameWidth, width, height);
+            if (Math.abs(nextFrameHeight - this.frameHeight) >= 1) {
+                this.frameHeight = nextFrameHeight;
+                this.frame.style.height = `${nextFrameHeight}px`;
+            }
+
+            const measuredHeight = this.measureWidgetHeight();
+            if (measuredHeight > 0) this.widgetHeight = measuredHeight;
+
+            // Classic draws the DOM widget inside the LiteGraph node and needs its
+            // node box resized explicitly. Nodes 2.0 tracks this DOM size itself.
+            if (globalThis.LiteGraph?.vueNodesMode !== true) {
+                const size = this.node.computeSize?.();
+                const nextNodeHeight = Math.max(540, Number(size?.[1]) || this.widgetHeight);
+                if (Math.abs((this.node.size?.[1] || 0) - nextNodeHeight) >= 1)
+                    this.node.setSize([this.node.size[0], nextNodeHeight]);
+            }
+            this.node.setDirtyCanvas?.(true, true);
+        });
     }
     native(name) { return this.node.widgets?.find(widget => widget.name === name); }
     value(name) { return this.native(name)?.value ?? ""; }
@@ -119,7 +180,20 @@ class SaveView {
         this.previous.disabled = !saved || this.index === 0;
         this.next.disabled = !saved || this.index === images.length - 1;
         this.count.textContent = `${saved ? this.index + 1 : 0} / ${images.length}`;
-        if (!saved) return;
+        if (!saved) {
+            this.imageSize = null;
+            this.image.removeAttribute("src");
+            this.image.hidden = true;
+            this.placeholder.hidden = false;
+            this.placeholder.textContent = "执行节点后，显示已保存的图片";
+            this.resolution.textContent = "分辨率 —";
+            this.filename.textContent = "文件名：—";
+            this.filename.removeAttribute("title");
+            this.frame.removeAttribute("title");
+            this.scheduleLayout();
+            return;
+        }
+        this.imageSize = { width: saved.width, height: saved.height };
         this.resolution.textContent = `分辨率 ${saved.width} × ${saved.height}`;
         this.filename.textContent = `文件名：${saved.filename}`;
         this.filename.title = saved.filename;
@@ -127,6 +201,7 @@ class SaveView {
         this.image.hidden = true; this.placeholder.hidden = false; this.placeholder.textContent = "正在加载已保存图片…";
         this.image.src = api.apiURL(`/view?${params}`);
         this.frame.title = `已保存到：${this.last.absolute_path}/${saved.filename}`;
+        this.scheduleLayout();
     }
     async openPicker() {
         if (this.closePicker) return;

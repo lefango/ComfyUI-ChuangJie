@@ -150,7 +150,7 @@ def compile_prompt(data):
                         demanded.add(output_ports[value[1]]["id"])
 
             generation = state["generation"]
-            generation_outputs = {"image", "positive_conditioning", "negative_conditioning", "latent"}
+            generation_outputs = {"image", "positive_conditioning", "negative_conditioning", "latent", "seed"}
             should_generate = generation["enabled"] or bool(generation_outputs & demanded)
             family = model_family(state)
             if should_generate and family == "moss_image" and generation["moss_layout"]:
@@ -315,6 +315,10 @@ def compile_prompt(data):
                     "negative": negative_ref,
                     "latent_image": [qwen_task, 2] if qwen_task else latent_ref,
                     "denoise": settings["denoise"]})
+                if "seed" in demanded:
+                    seed_task = add("seed", "PrimitiveInt", {"value": settings["seed"]})
+                    seed_index = next(i for i, output in enumerate(output_ports) if output["id"] == "seed")
+                    replacements[(str(mid), seed_index)] = [seed_task, 0]
                 for port_id, ref in (
                     ("positive_conditioning", positive_ref),
                     ("negative_conditioning", negative_ref),
@@ -367,8 +371,8 @@ class UnifiedManager:
     # The console's real ports are state-dependent and created by the frontend.
     # Keep wildcard placeholders so a failed prompt expansion can still validate
     # links and reach VALIDATE_INPUTS; successful prompts remove this node first.
-    RETURN_TYPES = ("*", "*", "*", "*", "*", "*", "*")
-    RETURN_NAMES = ("output_0", "output_1", "output_2", "output_3", "output_4", "output_5", "output_6")
+    RETURN_TYPES = ("*", "*", "*", "*", "*", "*", "*", "*")
+    RETURN_NAMES = ("output_0", "output_1", "output_2", "output_3", "output_4", "output_5", "output_6", "output_7")
 
     @classmethod
     def INPUT_TYPES(cls):
