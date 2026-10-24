@@ -1,3 +1,5 @@
+import {normalizeMossLayoutElements,normalizeMossCharacterBoxes} from "../state.mjs";
+
 const DEFAULT_STATE = {
   model: { id: "krea2", name: "Krea 2", family: "krea2", cover: "" },
   clip: ["clip-l"],
@@ -10,6 +12,8 @@ const DEFAULT_STATE = {
   selectedStyleIds: [],
   favoriteStyleIds: [],
   resolution: { width: 1024, height: 1024, ratio: "1:1" },
+  mossLayout: [],
+  mossCharacterBoxes: [],
   sampler: {
     seed: "0",
     steps: 20,
@@ -58,6 +62,8 @@ export function createInitialState(overrides = {}) {
   state.promptPresets = Array.isArray(state.promptPresets) ? state.promptPresets : [];
   state.selectedStyleIds = Array.isArray(state.selectedStyleIds) ? state.selectedStyleIds : [];
   state.favoriteStyleIds = Array.isArray(state.favoriteStyleIds) ? state.favoriteStyleIds : [];
+  state.mossLayout = normalizeMossLayoutElements(state.mossLayout);
+  state.mossCharacterBoxes = normalizeMossCharacterBoxes(state.mossCharacterBoxes,state.mossLayout.length);
   state.editImage.maskStrokes = Array.isArray(state.editImage.maskStrokes) ? state.editImage.maskStrokes : [];
   state.imageLibrary = Array.isArray(state.imageLibrary) ? state.imageLibrary : [];
   state.imageCategories = Array.isArray(state.imageCategories) ? state.imageCategories : ["全部", "未分类"];
@@ -117,10 +123,12 @@ export function resolveModelCapabilities(model = {}) {
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
   const qwenImage21 = /(?:^|_)qwen_?image_?2_?1(?:_|$)/.test(identity);
+  const mossLayout = /(?:^|_)moss_?image(?:_|$)/.test(identity);
   const supportsKreaStyleReference = identity.includes("krea2");
   return {
     imageEditing: qwenImage21,
     styleReference: qwenImage21 || supportsKreaStyleReference,
+    mossLayout,
   };
 }
 

@@ -6,7 +6,7 @@ import re
 from .model.core import Invalid, options, filename, cover_key, text
 from .lora.core import state as lora_state
 
-VERSION = "0.2.29"
+VERSION = "0.2.30"
 EDIT_MIN_DIMENSION = 16
 MANAGER = "CJUnifiedModelLoaderTest"
 ASSET = "CJUnifiedAssetTest"
@@ -28,10 +28,59 @@ def empty_state():
         k: {"source": "internal", "files": [], "file_names": [], "architecture": "", "options": {}, "name": "", "cover": None}
         for k in ("model", "clip", "vae")}, "lora": {"enabled": True, "entries": [], "preset": None},
         "preset": None, "name": "", "cover": None,
-        "generation": {"enabled": True, "edit_image_id": "", "edit_image_width": 0, "edit_image_height": 0}}
+        "generation": {"enabled": True, "edit_image_id": "", "edit_image_width": 0, "edit_image_height": 0,
+                       "moss_layout": [], "moss_character_boxes": []}}
 
 
 EMPTY_JSON = json.dumps(empty_state(), ensure_ascii=False)
+
+
+def moss_layout_elements(value):
+    if not isinstance(value, list):
+        raise Invalid("MOSS 布局元素必须是数组")
+    result = []
+    for index, item in enumerate(value, 1):
+        if not isinstance(item, dict) or item.get("type") not in ("obj", "text"):
+            raise Invalid(f"MOSS 第 {index} 个布局元素类型必须是 obj 或 text")
+        bbox = item.get("bbox")
+        if not isinstance(bbox, list) or len(bbox) != 4 or any(type(number) is not int or not 0 <= number <= 1000 for number in bbox):
+            raise Invalid(f"MOSS 第 {index} 个边界框须为 0 到 1000 的整数 [ymin,xmin,ymax,xmax]")
+        ymin, xmin, ymax, xmax = bbox
+        if ymin >= ymax or xmin >= xmax:
+            raise Invalid(f"MOSS 第 {index} 个边界框宽高必须大于零")
+        desc = item.get("desc", "")
+        if not isinstance(desc, str):
+            raise Invalid(f"MOSS 第 {index} 个元素描述必须是文字")
+        element = {"type": item["type"], "bbox": list(bbox), "desc": desc}
+        if item["type"] == "text":
+            text = item.get("text", "")
+            if not isinstance(text, str):
+                raise Invalid(f"MOSS 第 {index} 个文字框内容必须是文字")
+            element["text"] = text
+        palette = item.get("color_palette", [])
+        if not isinstance(palette, list) or len(palette) > 5 or any(
+                not isinstance(color, str) or not re.fullmatch(r"#?[0-9a-fA-F]{6}", color) for color in palette):
+            raise Invalid(f"MOSS 第 {index} 个元素颜色须为最多五个 #RRGGBB 色值")
+        if palette:
+            element["color_palette"] = [color.upper() for color in palette]
+        result.append(element)
+    return result
+
+
+def moss_character_boxes(value, element_count):
+    if not isinstance(value, list) or any(type(index) is not int or not 1 <= index <= element_count for index in value):
+        raise Invalid("MOSS 人物框编号须指向现有元素的 1 起始序号")
+    return sorted(set(value))
+
+
+def validate_moss_layout_content(elements):
+    """Reject unfinished editor boxes at queue time while keeping them saveable."""
+    for index, element in enumerate(elements, 1):
+        description = element.get("desc", "")
+        text_content = element.get("text", "") if element.get("type") == "text" else ""
+        if not description.strip() and not text_content.strip():
+            raise Invalid(f"MOSS 第 {index} 个边界框未填写描述或文字，请补全内容或删除该框")
+    return elements
 
 
 def parse_state(raw):
@@ -94,8 +143,11 @@ def parse_state(raw):
             dimensions[name] = value
         if bool(image_id) != bool(dimensions["edit_image_width"] and dimensions["edit_image_height"]):
             raise Invalid("待编辑图片及尺寸信息不完整")
+        layout = moss_layout_elements(generation.get("moss_layout", []))
+        character_boxes = moss_character_boxes(generation.get("moss_character_boxes", []), len(layout))
         out["generation"] = {"enabled": generation["enabled"], "edit_image_id": image_id,
-                             **dimensions}
+                             **dimensions, "moss_layout": layout,
+                             "moss_character_boxes": character_boxes}
     p = raw.get("preset")
     if p is not None:
         if not isinstance(p, dict) or type(p.get("revision")) is not int or p["revision"] < 1:
@@ -129,6 +181,11 @@ def content_digest(state):
     # fields existed. Disabled generation is the legacy behavior.
     if not value.get("generation", {}).get("enabled", False):
         value.pop("generation", None)
+    else:
+        if not value["generation"].get("moss_layout"):
+            value["generation"].pop("moss_layout", None)
+        if not value["generation"].get("moss_character_boxes"):
+            value["generation"].pop("moss_character_boxes", None)
     # Empty optional metadata must not mark existing v1 workflows as modified.
     for module in value["modules"].values():
         for field in ("file_names", "architecture"):

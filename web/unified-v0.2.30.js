@@ -1,17 +1,17 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.29/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.29/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.29/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.29/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.29/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.29/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.29/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.29/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.29/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.30/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.30/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.30/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.30/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.30/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.30/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.30/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.30/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.30/sampler-seed.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.29/lora/manager.css", "./unified-v0.2.29/style.css", "./unified-v0.2.29/image-editor.css", "./unified-v0.2.29/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.30/lora/manager.css", "./unified-v0.2.30/style.css", "./unified-v0.2.30/image-editor.css", "./unified-v0.2.30/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -309,6 +309,8 @@ class Preview {
             selectedPromptPreset:presets.find(item=>item.enabled!==false)?.id||"",
             selectedStyleIds:styles.map(item=>item.id),
             resolution:{...currentResolution,ratio:"自定义"},
+            mossLayout:state.generation.moss_layout,
+            mossCharacterBoxes:state.generation.moss_character_boxes,
             sampler:{
                 seed:String(sampler.seed??0),steps:Number(sampler.steps??20),cfg:Number(sampler.cfg??7),
                 sampler:sampler.sampler_name||"euler",scheduler:sampler.scheduler||"normal",denoise:Number(sampler.denoise??1),
@@ -362,6 +364,13 @@ class Preview {
             this.promptView.setResolution({width:state.resolution.width,height:state.resolution.height,batchSize:Number(this.widgetValue("latent_batch_size",1))});
         }else if(type==="sampler.change"){
             this.writeWidget("sampling_config",toSamplerWidgetValue(state.sampler));
+        }else if(type==="mossLayout.change"){
+            try{
+                const config=parseState(this.widgetValue("config",JSON.stringify(emptyState())));
+                config.generation.moss_layout=state.mossLayout;
+                config.generation.moss_character_boxes=state.mossCharacterBoxes;
+                this.writeWidget("config",JSON.stringify(parseState(config)));
+            }catch(error){this.error("MOSS 布局未保存："+error.message);}
         }else if(type==="editImage.choose"||type==="editImage.drop"){
             if(detail.file)return this.uploadImage(detail.file);
         }else if(type==="editImage.clear"){

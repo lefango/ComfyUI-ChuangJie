@@ -304,7 +304,49 @@ export function mountCollectionConsole(container, options = {}) {
           </section>
         </div>
 
-        <section class="cc-image-editor" aria-label="图像编辑">
+        <section class="cc-layout-editor" aria-label="MOSS 边界框布局">
+          <div class="cc-layout-header">
+            <div class="cc-layout-heading">
+              <span class="cc-layout-kicker">MOSS · COMPOSITION</span>
+              <strong>构图布局</strong>
+              <small>用边界框描述元素位置与画面层级</small>
+            </div>
+            <div class="cc-layout-toolbar">
+              <span class="cc-layout-resolution" data-layout-resolution></span>
+              <button class="cc-small-button cc-layout-primary" type="button" data-action="layout-add">添加元素</button>
+              <button class="cc-small-button" type="button" data-action="layout-order-up" aria-label="将选中元素移到更前面" disabled>前移</button>
+              <button class="cc-small-button" type="button" data-action="layout-order-down" aria-label="将选中元素移到更后面" disabled>后移</button>
+              <button class="cc-small-button" type="button" data-action="layout-delete" disabled>删除</button>
+            </div>
+          </div>
+          <div class="cc-layout-body">
+            <div class="cc-layout-stage-column">
+              <div class="cc-layout-canvas" data-layout-canvas role="group" aria-label="边界框构图画布">
+                <div class="cc-layout-grid" aria-hidden="true"></div>
+                <div class="cc-layout-empty" data-layout-empty>添加元素以开始布局</div>
+                <div class="cc-layout-boxes" data-layout-boxes></div>
+              </div>
+              <p class="cc-layout-status" data-layout-status aria-live="polite"></p>
+              <p class="cc-layout-capability-note" data-layout-capability-note hidden></p>
+              <p class="cc-layout-caption">画布只表示构图位置，不会作为图像输入或蒙版。列表靠前为背景，靠后为前景。</p>
+            </div>
+            <aside class="cc-layout-inspector" aria-label="边界框属性">
+              <div class="cc-layout-inspector-heading"><span>元素属性</span><small data-layout-selected-label>未选择元素</small></div>
+              <div class="cc-layout-empty-inspector" data-layout-empty-inspector>选择画布中的边界框以编辑属性。</div>
+              <div class="cc-layout-fields" data-layout-fields hidden>
+                <label class="cc-layout-field"><span>类别</span><select data-layout-field="type"><option value="obj">对象</option><option value="text">文字</option></select></label>
+                <label class="cc-layout-field" data-layout-text-wrap><span>画面文字</span><textarea data-layout-field="text" rows="2" placeholder="例如：HELLO"></textarea></label>
+                <label class="cc-layout-field"><span>描述 / 内容</span><textarea data-layout-field="desc" rows="3" placeholder="描述元素及其外观"></textarea></label>
+                <label class="cc-layout-field"><span>颜色（最多 5 个 #RRGGBB）</span><input data-layout-field="palette" type="text" placeholder="#D8A45B, #263746"></label>
+                <label class="cc-layout-character"><input data-layout-character type="checkbox"><span>标记为人物框</span></label>
+                <small class="cc-layout-field-hint">边界框按 0–1000 归一化保存；拖动框体可移动，拖动右下角可缩放。</small>
+              </div>
+            </aside>
+          </div>
+          <p class="cc-layout-capability-note cc-layout-empty-note" data-layout-empty-note>尚未添加元素。排队时会直接使用正向提示词，不创建布局提示词节点。</p>
+        </section>
+
+        <section class="cc-image-editor" aria-label="图像编辑" hidden>
           <div class="cc-editor-header">
             <button class="cc-editor-title" type="button" data-action="open-gallery" aria-haspopup="dialog">
               <span class="cc-editor-title-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18 9.5 9l3.3 5 2.2-3 5 7H4Z"></path><path d="M5 5h14"></path></svg></span>
@@ -375,6 +417,9 @@ export function mountCollectionConsole(container, options = {}) {
   let editImage = null;
   const previewImages = new Map();
   const imageEmpty = root.querySelector("[data-image-empty]");
+  const layoutCanvas = root.querySelector("[data-layout-canvas]");
+  let selectedLayoutIndex = -1;
+  let layoutDrag = null;
   const brushRange = root.querySelector("[data-brush-size]");
   const managedStylesCleanup = [];
   const focusedQueries = new Set(["style", "prompts", "model", "gallery"]);
@@ -396,6 +441,194 @@ export function mountCollectionConsole(container, options = {}) {
       displayStatus(`状态回调出错：${error instanceof Error ? error.message : String(error)}`, true);
     }
     return emitAction(type, detail);
+  }
+
+  function layoutOverlaps() {
+    let count = 0;
+    for (let a = 0; a < state.mossLayout.length; a++) {
+      const [ay0, ax0, ay1, ax1] = state.mossLayout[a].bbox;
+      for (let b = a + 1; b < state.mossLayout.length; b++) {
+        const [by0, bx0, by1, bx1] = state.mossLayout[b].bbox;
+        if (Math.max(ay0, by0) < Math.min(ay1, by1) && Math.max(ax0, bx0) < Math.min(ax1, bx1)) count++;
+      }
+    }
+    return count;
+  }
+
+  function layoutElementIsEmpty(element) {
+    const hasDescription = typeof element?.desc === "string" && Boolean(element.desc.trim());
+    const hasText = element?.type === "text" && typeof element.text === "string" && Boolean(element.text.trim());
+    return !hasDescription && !hasText;
+  }
+
+  function renderLayout() {
+    if (selectedLayoutIndex >= state.mossLayout.length) selectedLayoutIndex = -1;
+    const model = findModel(catalog, state.model) || state.model;
+    const enabled = resolveModelCapabilities(model).mossLayout;
+    const width = Math.max(1, Number(state.resolution.width) || 1024);
+    const height = Math.max(1, Number(state.resolution.height) || 1024);
+    layoutCanvas.style.aspectRatio = `${width} / ${height}`;
+    layoutCanvas.setAttribute("aria-disabled", String(!enabled));
+    root.querySelector("[data-layout-resolution]").textContent = `${width} × ${height} · 16 px 对齐`;
+    const boxes = root.querySelector("[data-layout-boxes]");
+    boxes.replaceChildren();
+    root.querySelector("[data-layout-empty]").hidden = Boolean(state.mossLayout.length);
+    state.mossLayout.forEach((element, index) => {
+      const [y0, x0, y1, x1] = element.bbox;
+      const box = createElement("button", `cc-layout-box${index === selectedLayoutIndex ? " cc-layout-box-selected" : ""}`);
+      box.type = "button";
+      box.dataset.action = "layout-select";
+      box.dataset.layoutIndex = String(index);
+      box.style.left = `${x0 / 10}%`;
+      box.style.top = `${y0 / 10}%`;
+      box.style.width = `${(x1 - x0) / 10}%`;
+      box.style.height = `${(y1 - y0) / 10}%`;
+      box.style.setProperty("--cc-layout-accent", element.color_palette?.[0] || "#d6a96b");
+      box.setAttribute("aria-pressed", String(index === selectedLayoutIndex));
+      const incomplete = layoutElementIsEmpty(element);
+      const label = createElement("span", "cc-layout-box-label", `${String(index + 1).padStart(2, "0")} · ${element.type === "text" ? (element.text.trim() || "未命名文字") : (element.desc.trim() || "未命名对象")}`);
+      box.classList.toggle("cc-layout-box-incomplete", incomplete);
+      box.title = incomplete
+        ? "未填写描述或文字；排队前请补全或删除该框"
+        : element.type === "text" ? `${element.text || "未填写文字"}${element.desc ? ` · ${element.desc}` : ""}` : element.desc;
+      const handle = createElement("span", "cc-layout-resize-handle");
+      handle.dataset.layoutResize = "true";
+      handle.setAttribute("aria-hidden", "true");
+      box.append(label, handle);
+      boxes.append(box);
+    });
+
+    const element = state.mossLayout[selectedLayoutIndex];
+    const fields = root.querySelector("[data-layout-fields]");
+    const emptyInspector = root.querySelector("[data-layout-empty-inspector]");
+    fields.hidden = !element;
+    emptyInspector.hidden = Boolean(element);
+    root.querySelector("[data-layout-selected-label]").textContent = element
+      ? `#${selectedLayoutIndex + 1} · ${element.type === "text" ? "文字" : "对象"}`
+      : "未选择元素";
+    const setField = (name, value) => {
+      const control = root.querySelector(`[data-layout-field="${name}"]`);
+      if (document.activeElement !== control) control.value = value;
+      control.disabled = !enabled || !element;
+    };
+    setField("type", element?.type || "obj");
+    setField("text", element?.text || "");
+    setField("desc", element?.desc || "");
+    setField("palette", (element?.color_palette || []).join(", "));
+    root.querySelector("[data-layout-text-wrap]").hidden = element?.type !== "text";
+    const character = root.querySelector("[data-layout-character]");
+    character.checked = Boolean(element && state.mossCharacterBoxes.includes(selectedLayoutIndex + 1));
+    character.disabled = !enabled || !element || element.type !== "obj";
+    root.querySelector('[data-action="layout-add"]').disabled = !enabled;
+    root.querySelector('[data-action="layout-delete"]').disabled = !enabled || !element;
+    root.querySelector('[data-action="layout-order-up"]').disabled = !enabled || !element || selectedLayoutIndex <= 0;
+    root.querySelector('[data-action="layout-order-down"]').disabled = !enabled || !element || selectedLayoutIndex >= state.mossLayout.length - 1;
+    const capabilityNote = root.querySelector("[data-layout-capability-note]");
+    capabilityNote.hidden = enabled;
+    capabilityNote.textContent = `当前模型为「${model?.name || "未选择"}」。此编辑器只对 MOSS-Image 文生图生效；已保存边界框不会传给当前模型。`;
+    root.querySelector("[data-layout-empty-note]").hidden = !enabled || Boolean(state.mossLayout.length);
+    const overlapCount = layoutOverlaps();
+    const incompleteCount = state.mossLayout.filter(layoutElementIsEmpty).length;
+    const status = root.querySelector("[data-layout-status]");
+    const warnings = [];
+    if (incompleteCount) warnings.push(`有 ${incompleteCount} 个框未填写描述或文字；补全或删除后才能排队`);
+    if (overlapCount) warnings.push(`有 ${overlapCount} 组边界框重叠；重叠有效，按列表顺序处理层级`);
+    status.classList.toggle("cc-layout-status-warning", warnings.length > 0);
+    status.classList.remove("cc-layout-status-error");
+    status.textContent = warnings.length
+      ? `${warnings.join("。 ")}。`
+      : state.mossLayout.length
+        ? `${state.mossLayout.length} 个元素 · 可重叠摆放，必要时调整列表层级。`
+        : "";
+  }
+
+  function commitLayoutChange() {
+    state = createInitialState(state);
+    renderLayout();
+    publishState("mossLayout.change", { elements: state.mossLayout.length });
+  }
+
+  function addLayoutElement() {
+    if (!resolveModelCapabilities(state.model).mossLayout) return;
+    const index = state.mossLayout.length;
+    const column = index % 4, row = Math.floor(index / 4) % 4;
+    const x0 = 40 + column * 240, y0 = 40 + row * 240;
+    state.mossLayout.push({ type: "obj", bbox: [y0, x0, y0 + 200, x0 + 200], desc: "" });
+    selectedLayoutIndex = index;
+    commitLayoutChange();
+    displayStatus("已添加对象框；在右侧填写元素描述。列表靠后为前景。", false);
+  }
+
+  function deleteLayoutElement() {
+    if (selectedLayoutIndex < 0 || !resolveModelCapabilities(state.model).mossLayout) return;
+    const removed = selectedLayoutIndex + 1;
+    state.mossLayout.splice(selectedLayoutIndex, 1);
+    state.mossCharacterBoxes = state.mossCharacterBoxes.filter(index => index !== removed).map(index => index > removed ? index - 1 : index);
+    selectedLayoutIndex = Math.min(selectedLayoutIndex, state.mossLayout.length - 1);
+    commitLayoutChange();
+  }
+
+  function moveLayoutOrder(direction) {
+    const next = selectedLayoutIndex + direction;
+    if (selectedLayoutIndex < 0 || next < 0 || next >= state.mossLayout.length || !resolveModelCapabilities(state.model).mossLayout) return;
+    const marked = state.mossLayout.map((_, index) => state.mossCharacterBoxes.includes(index + 1));
+    [state.mossLayout[selectedLayoutIndex], state.mossLayout[next]] = [state.mossLayout[next], state.mossLayout[selectedLayoutIndex]];
+    [marked[selectedLayoutIndex], marked[next]] = [marked[next], marked[selectedLayoutIndex]];
+    state.mossCharacterBoxes = marked.flatMap((enabled, index) => enabled ? [index + 1] : []);
+    selectedLayoutIndex = next;
+    commitLayoutChange();
+  }
+
+  function handleLayoutPointerDown(event) {
+    if (!resolveModelCapabilities(state.model).mossLayout) return;
+    const box = event.target.closest?.("[data-layout-index]");
+    if (!box) return;
+    const index = Number(box.dataset.layoutIndex);
+    if (!Number.isInteger(index) || !state.mossLayout[index]) return;
+    selectedLayoutIndex = index;
+    const rect = layoutCanvas.getBoundingClientRect();
+    layoutDrag = {
+      index, mode: event.target.closest?.("[data-layout-resize]") ? "resize" : "move",
+      pointerId: event.pointerId ?? 0, startX: event.clientX, startY: event.clientY,
+      rectWidth: rect.width, rectHeight: rect.height, bbox: [...state.mossLayout[index].bbox], changed: false,
+    };
+    layoutCanvas.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    renderLayout();
+  }
+
+  function handleLayoutPointerMove(event) {
+    if (!layoutDrag || (event.pointerId != null && event.pointerId !== layoutDrag.pointerId)) return;
+    if (!layoutDrag.rectWidth || !layoutDrag.rectHeight) return;
+    const dx = Math.round((event.clientX - layoutDrag.startX) * 1000 / layoutDrag.rectWidth);
+    const dy = Math.round((event.clientY - layoutDrag.startY) * 1000 / layoutDrag.rectHeight);
+    const [y0, x0, y1, x1] = layoutDrag.bbox;
+    const width = x1 - x0, height = y1 - y0;
+    if (layoutDrag.mode === "move") {
+      const nextX = Math.max(0, Math.min(1000 - width, x0 + dx));
+      const nextY = Math.max(0, Math.min(1000 - height, y0 + dy));
+      state.mossLayout[layoutDrag.index].bbox = [nextY, nextX, nextY + height, nextX + width];
+    } else {
+      const nextX = Math.max(x0 + 1, Math.min(1000, x1 + dx));
+      const nextY = Math.max(y0 + 1, Math.min(1000, y1 + dy));
+      state.mossLayout[layoutDrag.index].bbox = [y0, x0, nextY, nextX];
+    }
+    layoutDrag.changed = true;
+    renderLayout();
+  }
+
+  function handleLayoutPointerUp(event) {
+    if (!layoutDrag || (event.pointerId != null && event.pointerId !== layoutDrag.pointerId)) return;
+    const changed = layoutDrag.changed;
+    layoutDrag = null;
+    if (changed) commitLayoutChange();
+  }
+
+  function handleLayoutPointerCancel() {
+    if (!layoutDrag) return;
+    state.mossLayout[layoutDrag.index].bbox = layoutDrag.bbox;
+    layoutDrag = null;
+    renderLayout();
   }
 
   function setPrompt(fieldName, value, actionType = "prompt.change") {
@@ -477,6 +710,8 @@ export function mountCollectionConsole(container, options = {}) {
     modelNote.textContent = capabilities.imageEditing
       ? ""
       : "当前模型不支持图像编辑；待编辑图片与遮罩不会参与生成。";
+
+    renderLayout();
 
     for (const kind of ["sample", "final"]) {
       const previewStage = root.querySelector(`[data-preview-stage="${kind}"]`);
@@ -1241,6 +1476,14 @@ export function mountCollectionConsole(container, options = {}) {
     const button = event.target.closest("button[data-action]");
     if (!button || !root.contains(button)) return;
     const action = button.dataset.action;
+    if (action === "layout-add") addLayoutElement();
+    if (action === "layout-select") {
+      selectedLayoutIndex = Number(button.dataset.layoutIndex);
+      renderLayout();
+    }
+    if (action === "layout-delete") deleteLayoutElement();
+    if (action === "layout-order-up") moveLayoutOrder(-1);
+    if (action === "layout-order-down") moveLayoutOrder(1);
     if (action === "open-panel") requestPanel(button.dataset.panel);
     if (action === "choose-image") {
       emitAction("editImage.choose", { source: "file-picker" });
@@ -1516,8 +1759,68 @@ export function mountCollectionConsole(container, options = {}) {
   }
 
   function handleRootInput(event) {
+    const layoutField = event.target.dataset.layoutField;
+    if (layoutField === "text" || layoutField === "desc") {
+      const element = state.mossLayout[selectedLayoutIndex];
+      if (element) {
+        element[layoutField] = event.target.value;
+        commitLayoutChange();
+      }
+      return;
+    }
+    if (layoutField === "palette") {
+      const element = state.mossLayout[selectedLayoutIndex];
+      if (!element) return;
+      const palette = event.target.value.split(/[\n,;]/).map(color => color.trim()).filter(Boolean);
+      if (palette.length > 5 || palette.some(color => !/^#?[0-9a-f]{6}$/i.test(color))) {
+        setLayoutError("颜色格式无效；请填写最多五个 #RRGGBB 色值。未保存该修改。");
+        return;
+      }
+      if (palette.length) element.color_palette = palette.map(color => color.toUpperCase());
+      else delete element.color_palette;
+      commitLayoutChange();
+      return;
+    }
     const promptField = event.target.dataset.promptField;
     if (promptField) setPrompt(promptField, event.target.value);
+  }
+
+  function setLayoutError(message) {
+    const status = root.querySelector("[data-layout-status]");
+    status.textContent = message;
+    status.classList.add("cc-layout-status-error");
+  }
+
+  function handleRootChange(event) {
+    const field = event.target.dataset.layoutField;
+    const element = state.mossLayout[selectedLayoutIndex];
+    if (!element || !resolveModelCapabilities(state.model).mossLayout) return;
+    if (field === "type") {
+      element.type = event.target.value;
+      if (element.type === "text") element.text ??= "";
+      else {
+        delete element.text;
+        state.mossCharacterBoxes = state.mossCharacterBoxes.filter(index => index !== selectedLayoutIndex + 1);
+      }
+    } else if (field === "text" || field === "desc") {
+      element[field] = event.target.value;
+    } else if (field === "palette") {
+      const palette = event.target.value.split(/[\n,;]/).map(color => color.trim()).filter(Boolean);
+      if (palette.length > 5 || palette.some(color => !/^#?[0-9a-f]{6}$/i.test(color))) {
+        event.target.value = (element.color_palette || []).join(", ");
+        renderLayout();
+        setLayoutError("颜色格式无效；请填写最多五个 #RRGGBB 色值。未保存该修改。");
+        return;
+      }
+      if (palette.length) element.color_palette = palette.map(color => color.toUpperCase());
+      else delete element.color_palette;
+    } else if (event.target.matches("[data-layout-character]")) {
+      const selected = new Set(state.mossCharacterBoxes);
+      if (event.target.checked) selected.add(selectedLayoutIndex + 1);
+      else selected.delete(selectedLayoutIndex + 1);
+      state.mossCharacterBoxes = [...selected].sort((a, b) => a - b);
+    } else return;
+    commitLayoutChange();
   }
 
   function handleDialogInput(event) {
@@ -1632,6 +1935,7 @@ export function mountCollectionConsole(container, options = {}) {
   root.addEventListener("click", handleRootClick, { signal });
   dialog.addEventListener("click", handleDialogClick, { signal });
   root.addEventListener("input", handleRootInput, { signal });
+  root.addEventListener("change", handleRootChange, { signal });
   dialog.addEventListener("input", handleDialogInput, { signal });
   dialog.addEventListener("change", handleDialogChange, { signal });
   dialog.addEventListener("dragover", handleGalleryDragOver, { signal });
@@ -1643,6 +1947,10 @@ export function mountCollectionConsole(container, options = {}) {
     renderMain();
   }, { signal });
   imageStage.addEventListener("drop", handleStageDrop, { signal });
+  layoutCanvas.addEventListener("pointerdown", handleLayoutPointerDown, { signal });
+  layoutCanvas.addEventListener("pointermove", handleLayoutPointerMove, { signal });
+  layoutCanvas.addEventListener("pointerup", handleLayoutPointerUp, { signal });
+  layoutCanvas.addEventListener("pointercancel", handleLayoutPointerCancel, { signal });
   imageStage.addEventListener("click", () => {
     if (!state.editImage.src) return;
     root.querySelector("[data-image-file]").click();
@@ -1658,6 +1966,7 @@ export function mountCollectionConsole(container, options = {}) {
   }, { signal });
   window.addEventListener("resize", () => {
     syncStageSizing();
+    renderLayout();
   }, { signal });
 
   renderMain();

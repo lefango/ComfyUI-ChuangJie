@@ -2,7 +2,33 @@ export const TYPES = {model:"MODEL",clip:"CLIP",vae:"VAE"};
 export const LABELS = {model:"模型",clip:"CLIP",vae:"VAE"};
 export const clone = v => JSON.parse(JSON.stringify(v));
 export const defaultOptions = () => ({weight_dtype:"default",device:"default",dequant_dtype:"default",patch_dtype:"default",clip_type:"auto",patch_on_device:false,output_model:true,output_clip:true,output_vae:true});
-export const emptyState = () => ({version:1,modules:Object.fromEntries(Object.keys(TYPES).map(k=>[k,{source:"internal",files:[],file_names:[],architecture:"",options:defaultOptions(),name:"",cover:null}])),lora:{enabled:true,entries:[],preset:null},preset:null,name:"",cover:null,generation:{enabled:true,edit_image_id:"",edit_image_width:0,edit_image_height:0}});
+export function normalizeMossLayoutElements(value) {
+    if (!Array.isArray(value)) throw Error("MOSS 布局元素必须是数组");
+    return value.map((item,index)=>{
+        if (!item || typeof item !== "object" || Array.isArray(item)) throw Error(`MOSS 第 ${index+1} 个布局元素无效`);
+        if (!new Set(["obj","text"]).has(item.type)) throw Error(`MOSS 第 ${index+1} 个布局元素类型必须是 obj 或 text`);
+        if (!Array.isArray(item.bbox) || item.bbox.length !== 4 || item.bbox.some(number=>!Number.isInteger(number)||number<0||number>1000)) throw Error(`MOSS 第 ${index+1} 个边界框须为 0 到 1000 的整数 [ymin,xmin,ymax,xmax]`);
+        const [ymin,xmin,ymax,xmax]=item.bbox;
+        if (ymin>=ymax || xmin>=xmax) throw Error(`MOSS 第 ${index+1} 个边界框宽高必须大于零`);
+        const desc=item.desc??"";
+        if (typeof desc!=="string") throw Error(`MOSS 第 ${index+1} 个元素描述必须是文字`);
+        const result={type:item.type,bbox:[ymin,xmin,ymax,xmax],desc};
+        if (item.type==="text") {
+            const text=item.text??"";
+            if (typeof text!=="string") throw Error(`MOSS 第 ${index+1} 个文字框内容必须是文字`);
+            result.text=text;
+        }
+        const palette=item.color_palette??[];
+        if (!Array.isArray(palette) || palette.length>5 || palette.some(color=>typeof color!=="string"||!/^#?[0-9a-f]{6}$/i.test(color))) throw Error(`MOSS 第 ${index+1} 个元素颜色须为最多五个 #RRGGBB 色值`);
+        if (palette.length) result.color_palette=palette.map(color=>color.toUpperCase());
+        return result;
+    });
+}
+export function normalizeMossCharacterBoxes(value, elementCount) {
+    if (!Array.isArray(value) || value.some(index=>!Number.isInteger(index)||index<1||index>elementCount)) throw Error("MOSS 人物框编号须指向现有元素的 1 起始序号");
+    return [...new Set(value)].sort((a,b)=>a-b);
+}
+export const emptyState = () => ({version:1,modules:Object.fromEntries(Object.keys(TYPES).map(k=>[k,{source:"internal",files:[],file_names:[],architecture:"",options:defaultOptions(),name:"",cover:null}])),lora:{enabled:true,entries:[],preset:null},preset:null,name:"",cover:null,generation:{enabled:true,edit_image_id:"",edit_image_width:0,edit_image_height:0,moss_layout:[],moss_character_boxes:[]}});
 export function parseState(raw) {
     const s = typeof raw === "string" ? JSON.parse(raw) : clone(raw);
     if (!s || s.version !== 1 || s.mode === "checkpoint" || (s.mode != null && s.mode !== "separate") || s.checkpoint || !s.modules || !s.lora || typeof s.lora.enabled !== "boolean") throw Error("配置版本或结构无效，原配置已保留");
@@ -14,13 +40,15 @@ export function parseState(raw) {
         if(!Array.isArray(m.file_names)||![0,m.files.length].includes(m.file_names.length))throw Error("模型显示名称与文件数量不一致");
     }
     if (!Array.isArray(s.lora.entries)) throw Error("LoRA 配置无效");
-    if (!Object.hasOwn(s, "generation")) s.generation={enabled:false,edit_image_id:"",edit_image_width:0,edit_image_height:0};
+    if (!Object.hasOwn(s, "generation")) s.generation={enabled:false,edit_image_id:"",edit_image_width:0,edit_image_height:0,moss_layout:[],moss_character_boxes:[]};
     const g=s.generation;
     if (!g || typeof g!=="object" || typeof g.enabled!=="boolean") throw Error("一体出图设置无效");
     g.edit_image_id??="";g.edit_image_width??=0;g.edit_image_height??=0;
     if (g.edit_image_id && (typeof g.edit_image_id !== "string" || !/^[0-9a-f]{32}$/.test(g.edit_image_id))) throw Error("待编辑图片 ID 无效");
     for (const name of ["edit_image_width","edit_image_height"]) if (!Number.isInteger(g[name])||g[name]<0||g[name]>12000) throw Error("待编辑图片尺寸无效");
     if (Boolean(g.edit_image_id)!==Boolean(g.edit_image_width&&g.edit_image_height)) throw Error("待编辑图片及尺寸信息不完整");
+    g.moss_layout=normalizeMossLayoutElements(Object.hasOwn(g,"moss_layout")?g.moss_layout:[]);
+    g.moss_character_boxes=normalizeMossCharacterBoxes(Object.hasOwn(g,"moss_character_boxes")?g.moss_character_boxes:[],g.moss_layout.length);
     return s;
 }
 export const outputs = s => [...Object.keys(TYPES).filter(k=>s.modules[k].source!=="off").map(k=>({id:k,type:TYPES[k],label:LABELS[k]})),{id:"image",type:"IMAGE",label:"图像"},{id:"positive_conditioning",type:"CONDITIONING",label:"正面条件"},{id:"negative_conditioning",type:"CONDITIONING",label:"负面条件"},{id:"latent",type:"LATENT",label:"潜空间"}];
@@ -29,6 +57,10 @@ export const stableJSON = v => JSON.stringify(v, function(k,value){return value 
 export async function digest(s) {
     const c=clone(s);c.preset=null;
     if (!c.generation?.enabled) delete c.generation;
+    else {
+        if (!c.generation.moss_layout?.length) delete c.generation.moss_layout;
+        if (!c.generation.moss_character_boxes?.length) delete c.generation.moss_character_boxes;
+    }
     for(const m of Object.values(c.modules))for(const field of ["architecture","file_names"])if(!m[field]?.length)delete m[field];
     const hash=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(stableJSON(c)));
     return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,"0")).join("");

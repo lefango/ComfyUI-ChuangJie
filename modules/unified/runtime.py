@@ -9,7 +9,7 @@ import re
 from .core import (MANAGER, ASSET, PATCH, TRIGGERS, PROMPT_STAGE, EDIT_IMAGE_STAGE,
                    MASK_COMPOSITE_STAGE, EMPTY_JSON, Invalid, parse_state, ports,
                    patch_config, clip_purpose, model_family,
-                   qwen_image_21_edit_capable, fitted_dimensions)
+                   qwen_image_21_edit_capable, fitted_dimensions, validate_moss_layout_content)
 from .model.runtime import AssetLoader
 from .lora.nodes import LoRAManager
 from .lora.core import state as lora_state, triggers
@@ -102,6 +102,19 @@ def moss_core_support_error():
     return ""
 
 
+def moss_layout_support_error():
+    try:
+        import nodes as comfy_nodes
+    except (ImportError, AttributeError):
+        return "当前 ComfyUI 核心缺少原生 MOSS 布局提示词节点 MOSSImageLayoutPrompt。"
+    available = getattr(comfy_nodes, "NODE_CLASS_MAPPINGS", {})
+    if "MOSSImageLayoutPrompt" not in available:
+        return "当前 ComfyUI 核心缺少原生 MOSS 布局提示词节点 MOSSImageLayoutPrompt；请更新 ComfyUI 核心并重启。"
+    if "CLIPTextEncode" not in available:
+        return "当前 ComfyUI 核心缺少标准文本编码节点 CLIPTextEncode，无法编码 MOSS 布局提示词。"
+    return ""
+
+
 def compile_prompt(data):
     original = data.get("prompt")
     if not isinstance(original, dict):
@@ -140,6 +153,8 @@ def compile_prompt(data):
             generation_outputs = {"image", "positive_conditioning", "negative_conditioning", "latent"}
             should_generate = generation["enabled"] or bool(generation_outputs & demanded)
             family = model_family(state)
+            if should_generate and family == "moss_image" and generation["moss_layout"]:
+                validate_moss_layout_content(generation["moss_layout"])
             if should_generate:
                 for key in ("model", "clip", "vae"):
                     if state["modules"][key]["source"] == "off":
@@ -154,6 +169,10 @@ def compile_prompt(data):
                 support_error = moss_core_support_error()
                 if support_error:
                     raise Invalid(support_error)
+                if generation["moss_layout"]:
+                    layout_error = moss_layout_support_error()
+                    if layout_error:
+                        raise Invalid(layout_error)
 
             for key in ("model", "clip", "vae"):
                 if key not in demanded:
@@ -271,18 +290,34 @@ def compile_prompt(data):
                     if source_inputs.get("qwen_reference_data"):
                         qwen_inputs["images.image_2"] = [edit_task, 4]
                     qwen_task = add("qwen-image-21", "TextEncodeQwenImage21", qwen_inputs)
+                layout_encode_task = None
+                if family == "moss_image" and generation["moss_layout"]:
+                    layout_task = add("moss-layout", "MOSSImageLayoutPrompt", {
+                        "prompt": [prompt_task, 2],
+                        # In ComfyUI prompt JSON, every two-item list is parsed
+                        # as a node link. Wrap literal arrays so even a
+                        # two-element layout cannot be mistaken for a link.
+                        "element": {"__value__": generation["moss_layout"]},
+                        "width": width,
+                        "height": height,
+                        "character_boxes": ", ".join(str(index) for index in generation["moss_character_boxes"]),
+                    })
+                    layout_encode_task = add("moss-layout-encode", "CLIPTextEncode", {
+                        "clip": refs["clip"], "text": [layout_task, 0],
+                    })
+                positive_ref = [qwen_task, 0] if qwen_task else ([layout_encode_task, 0] if layout_encode_task else [prompt_task, 0])
+                negative_ref = [qwen_task, 1] if qwen_task else [prompt_task, 1]
                 sampler_task = add("ksampler", "KSampler", {
                     "model": [prompt_task, 4], "seed": settings["seed"], "steps": settings["steps"],
                     "cfg": settings["cfg"], "sampler_name": settings["sampler_name"],
                     "scheduler": settings["scheduler"],
-                    "positive": [qwen_task, 0] if qwen_task else [prompt_task, 0],
-                    "negative": [qwen_task, 1] if qwen_task else [prompt_task, 1],
+                    "positive": positive_ref,
+                    "negative": negative_ref,
                     "latent_image": [qwen_task, 2] if qwen_task else latent_ref,
                     "denoise": settings["denoise"]})
-                condition_task = qwen_task or prompt_task
                 for port_id, ref in (
-                    ("positive_conditioning", [condition_task, 0]),
-                    ("negative_conditioning", [condition_task, 1]),
+                    ("positive_conditioning", positive_ref),
+                    ("negative_conditioning", negative_ref),
                     ("latent", [sampler_task, 0]),
                 ):
                     if port_id in demanded:
@@ -327,7 +362,7 @@ def compile_prompt(data):
 
 class UnifiedManager:
     CATEGORY = "创界/模型工具"
-    DESCRIPTION = "单节点管理模型、LoRA、提示词、K 采样、VAE 解码与图像编辑。"
+    DESCRIPTION = "单节点管理模型、LoRA、提示词、MOSS 构图布局、K 采样和 VAE 解码；兼容已有 Qwen Image 2.1 图像编辑工作流。"
     FUNCTION = "load"
     # The console's real ports are state-dependent and created by the frontend.
     # Keep wildcard placeholders so a failed prompt expansion can still validate
