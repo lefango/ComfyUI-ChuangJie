@@ -87,3 +87,11 @@
 .um-sampling-dialog{width:min(520px,94vw)}.um-sampling-dialog form{display:flex;flex-direction:column;gap:6px}.um-sampling-dialog .um-field{margin:3px 0}.um-sampling-dialog .um-actions{flex-wrap:wrap}
 @media(max-width:1100px){.um-node.um-composer{min-height:860px}.um-composer-columns{grid-template-columns:minmax(285px,1fr) minmax(240px,.9fr) minmax(240px,.9fr)}.um-composer-toolbar{gap:5px}.um-composer-toolbar button{padding:5px 8px;font-size:11px}}
 @media(max-width:800px){.um-node.um-composer{min-height:1200px}.um-composer-columns{grid-template-columns:minmax(280px,1fr) minmax(220px,.8fr);grid-template-rows:minmax(0,1fr) minmax(260px,.8fr)}.um-composer-left{grid-row:1/3}.um-composer-output{min-height:0}}
+
+/* The console keeps its real ComfyUI node and sockets. Remove only the
+   Nodes 2.0 Vue shell that contains this console's DOM widget. */
+.lg-node:has(.um-node.um-composer){filter:none!important;outline:none!important}
+.lg-node:has(.um-node.um-composer) [data-testid="node-inner-wrapper"]{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.lg-node:has(.um-node.um-composer) [data-testid^="node-body-"]{gap:0!important;padding:0!important;background:transparent!important}
+.lg-node:has(.um-node.um-composer).outline-node-component-outline [data-testid="node-state-outline-overlay"]{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important}
+.um-node.um-composer.is-selected,.lg-node:has(.um-node.um-composer).outline-node-component-outline .um-node.um-composer{outline:2px solid rgba(77,214,187,.9);outline-offset:3px}

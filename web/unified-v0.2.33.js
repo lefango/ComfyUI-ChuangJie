@@ -1,17 +1,18 @@
 import {app} from "../../scripts/app.js";
 import {api} from "../../scripts/api.js";
-import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.32/manager.mjs";
-import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.32/state.mjs";
-import {PromptView,promptStylesheetUrl} from "./unified-v0.2.32/prompt/index.mjs";
-import {normalizeCoverBlob} from "./unified-v0.2.32/prompt/cover.mjs";
-import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.32/image-editor.mjs";
-import {mountCollectionConsole} from "./unified-v0.2.32/collection-console/collection-console.mjs";
-import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.32/collection-console-adapter.mjs";
-import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.32/preview-events.mjs";
-import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.32/sampler-seed.mjs";
+import {Client,BASE,el,button,openManager,confirmDialog} from "./unified-v0.2.33/manager.mjs";
+import {emptyState,parseState,outputs,inputs,digest,summary,modelFamily,normalizeMossDimensionWidgets,mossSamplerConfig,samplerConfigForFamily,qwenImage21EditCapable} from "./unified-v0.2.33/state.mjs";
+import {PromptView,promptStylesheetUrl} from "./unified-v0.2.33/prompt/index.mjs";
+import {normalizeCoverBlob} from "./unified-v0.2.33/prompt/cover.mjs";
+import {openImageEditLibrary,openMaskEditor} from "./unified-v0.2.33/image-editor.mjs";
+import {mountCollectionConsole} from "./unified-v0.2.33/collection-console/collection-console.mjs";
+import {legacyPanelRoute,toSamplerWidgetValue} from "./unified-v0.2.33/collection-console-adapter.mjs";
+import {historyBelongsToActivePrompt,samplerPreviewBelongsToNode,withLivePreviewOptions} from "./unified-v0.2.33/preview-events.mjs";
+import {normalizeSamplerConfig,randomSafeSeed,randomizeSamplingConfigAfterQueue} from "./unified-v0.2.33/sampler-seed.mjs";
+import {applyConsoleNodeInstanceShell,createConsoleShellHooks} from "./unified-v0.2.33/node-shell.mjs";
 
 const stylesheet = (file) => { const link = el("link"); link.rel = "stylesheet"; link.href = new URL(file, import.meta.url).href; document.head.append(link); };
-for (const file of ["./unified-v0.2.32/lora/manager.css", "./unified-v0.2.32/style.css", "./unified-v0.2.32/image-editor.css", "./unified-v0.2.32/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
+for (const file of ["./unified-v0.2.33/lora/manager.css", "./unified-v0.2.33/style.css", "./unified-v0.2.33/image-editor.css", "./unified-v0.2.33/collection-console/collection-console.css", promptStylesheetUrl]) stylesheet(file);
 
 const client = new Client((url, options) => api.fetchApi(url, options), (scope, key) => api.apiURL(BASE + scope + "/covers/" + key));
 const previews = new WeakMap();
@@ -702,13 +703,18 @@ api.addEventListener("execution_success",async event=>{
 });
 api.addEventListener("execution_error",event=>{const detail=event.detail||{},id=String(detail.node_id??detail.node??"");for(const ref of live){const preview=ref.deref();if(preview&&!preview.removed&&(preview.tasks?.has(id)||id===String(preview.node.id)))preview.error(detail.exception_message||detail.message||"内部任务失败，请查看后端日志");}});
 app.registerExtension({
+    ...createConsoleShellHooks(globalThis.LiteGraph),
     name:"chuangjie.unified-model-loader-test",
     setup(){installQueueHook();},
     nodeCreated(node){
         if(INTERNAL_CLASSES.has(node.comfyClass)){localized(node);return;}
         if(node.comfyClass!=="CJUnifiedModelLoaderTest")return;
         localized(node);
-        try { previews.set(node,new Preview(node));watch(); }
+        try {
+            const preview=new Preview(node);
+            applyConsoleNodeInstanceShell(node,preview.element);
+            previews.set(node,preview);watch();
+        }
         catch(error) {
             console.error("[ComfyUI-ChuangJie] 创界集成控制台挂载失败：" + (error?.stack || error?.message || String(error)));
             throw error;
@@ -719,6 +725,7 @@ app.registerExtension({
         if(node.comfyClass==="CJUnifiedModelLoaderTest"){
             localized(node);
             const preview=previews.get(node);
+            if(preview)applyConsoleNodeInstanceShell(node,preview.element);
             preview?.restoreSamplerProfile();
             preview?.update(true,true);
         }

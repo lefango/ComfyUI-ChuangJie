@@ -26,7 +26,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {"VisualSaveImage": "创界保存图像",
     TRIGGERS: "一体节点 · 内部触发词", PROMPT_STAGE: "一体节点 · 内部提示词",
     EDIT_IMAGE_STAGE: "一体节点 · 内部图像编辑", MASK_COMPOSITE_STAGE: "一体节点 · 内部遮罩合成"}
 WEB_DIRECTORY = "./web"
-__version__ = "0.5.33"
+__version__ = "0.5.34"
 
 
 def _register():

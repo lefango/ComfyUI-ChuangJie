@@ -2,7 +2,12 @@
 
 **中英双语 | 简单安装 | 可读源码**
 
-当前版本为 **0.5.33**，集成创界集成控制台 **0.2.32** 和创界保存图像 **0.1.2**。本版修复 LoRA 完全或部分未应用时仍显示成功的问题，并保留现有工作流配置、节点端口和用户资料兼容。
+当前版本为 **0.5.34**，集成创界集成控制台 **0.2.33** 和创界保存图像 **0.1.2**。
+
+## 0.5.34 更新
+
+- 集合控制台 `CJUnifiedModelLoaderTest` 在 Classic/LiteGraph 与 Nodes 2.0 中分别隐藏 ComfyUI 默认节点外壳，并在控制台主体保留清晰的选中反馈。
+- 保留原生 socket、连线、工作流配置、控制台界面、端口与执行行为。自动化回归通过；Classic / Nodes 2.0 界面实测尚未完成。
 
 ## 0.5.33 更新
 
@@ -176,9 +181,9 @@ The prompt node adds separate positive and negative text outputs for downstream 
 
 ## 界面预览 | Interface preview
 
-以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前 0.5.33 将模型、LoRA 与提示词管理整合在创界集成控制台中；截图仅供历史参考。
+以下截图对应 GitHub 公开版 0.3.3 的独立节点界面，LoRA 卡片和提示词条目是演示资料。当前 0.5.34 将模型、LoRA 与提示词管理整合在创界集成控制台中；截图仅供历史参考。
 
-The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.33 integrates model, LoRA and prompt management in the ChuangJie Integrated Console; treat these screenshots as historical references.
+The screenshots below show the older standalone-node UI from public release 0.3.3 and use demo data. Version 0.5.34 integrates model, LoRA and prompt management in the ChuangJie Integrated Console; treat these screenshots as historical references.
 
 **节点入口：在“创界节点”分类下选择管理工具。**
 
@@ -198,7 +203,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 | 你想做什么 | 下载什么 | 说明 |
 | --- | --- | --- |
-| **只想安装使用** | [当前成品：ComfyUI-ChuangJie-0.5.33.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.33.zip) | Comfy Registry 索引同步后可通过 Manager 安装或更新；也可直接下载此 ZIP。 |
+| **只想安装使用** | [当前成品：ComfyUI-ChuangJie-0.5.34.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.34.zip) | Comfy Registry 索引同步后可通过 Manager 安装或更新；也可直接下载此 ZIP。 |
 | **想看代码或自己修改** | [开源源码：本仓库文件](https://github.com/lefango/ComfyUI-ChuangJie) | Python 和 JavaScript 源码都在这里。改动需要自己检查并安装。 |
 
 **成品**就是已经打包、给普通用户安装的 ZIP；**源码**是程序员可以阅读和修改的原始文件。两者功能相同，成品只是更方便安装。`releases/` 文件夹提供成品 ZIP；仓库的 Code 页面提供源码。
@@ -214,7 +219,7 @@ These are screenshots of the plugin running in ComfyUI. LoRA cards and prompt en
 
 ## 在 ComfyUI Manager 中安装或更新
 
-在 Manager 搜索 `ComfyUI-ChuangJie`，点安装或更新；如果 Registry 索引尚未刷新，也可以直接下载上方的 0.5.33 ZIP，或在 `ComfyUI/custom_nodes/` 中运行：
+在 Manager 搜索 `ComfyUI-ChuangJie`，点安装或更新；如果 Registry 索引尚未刷新，也可以直接下载上方的 0.5.34 ZIP，或在 `ComfyUI/custom_nodes/` 中运行：
 
 ```bash
 git clone https://github.com/lefango/ComfyUI-ChuangJie.git
@@ -237,7 +242,7 @@ git clone https://github.com/lefango/ComfyUI-ChuangJie.git
 
 ### Product or source code?
 
-- **Current package:** [ComfyUI-ChuangJie-0.5.33.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.33.zip). The Comfy Registry index may take time to refresh after publishing.
+- **Current package:** [ComfyUI-ChuangJie-0.5.34.zip](https://github.com/lefango/ComfyUI-ChuangJie/raw/refs/heads/main/releases/ComfyUI-ChuangJie-0.5.34.zip). The Comfy Registry index may take time to refresh after publishing.
 - **Open source code:** Browse or clone the files in this repository if you want to inspect or modify the code. The code is readable Python and JavaScript; the ZIP is the packaged version for easier installation.
 
 ### Install
